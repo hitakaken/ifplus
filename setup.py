@@ -22,6 +22,10 @@ install_requires = [
     'bson',
     'pymongo',
     'watchdog',
+    'socketIO-client',
+    'flask-socketio',
+    'gevent',
+    'gevent-websocket',
     'PyYAML',
 ]
 
