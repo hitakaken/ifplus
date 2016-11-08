@@ -13,3 +13,5 @@ flatdict
 bidict
 bson
 pymongo
+watchdog
+PyYAML
