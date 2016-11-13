@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # https://github.com/Voronenko/Storing_TreeView_Structures_WithMongoDB
 import stat
+from pymongo import IndexModel, ASCENDING, DESCENDING
 from ifplus.restful.patched import fields
 
 
@@ -90,6 +91,14 @@ class FileMetaInfo(object):
         if self.creator is not None:
             result['creator'] = self.creator
         return result
+
+    MONGO_INDEXES = [
+        IndexModel([('mtime', DESCENDING)], name='last_modify'),
+        IndexModel([('uid', ASCENDING), ('mtime', DESCENDING)], name='last_modify_by_user'),
+        IndexModel([('ctime', DESCENDING)], name='last_change'),
+        IndexModel([('uid', ASCENDING), ('ctime', DESCENDING)], name='last_change_by_user'),
+        IndexModel([('ctime', DESCENDING), ('mtime', DESCENDING)], name='time_stamp'),
+    ]
 
     @classmethod
     def parse(cls, raw):
