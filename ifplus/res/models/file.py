@@ -3,6 +3,7 @@
 import stat
 from pymongo import IndexModel, ASCENDING, DESCENDING
 from ifplus.restful.patched import fields
+from .acl import AccessControlList
 
 META_ATTRIBUTE_NAMES = ['fid', 'dev', 'nlink', 'size',
                         'mode', 'uid', 'gid', 'create', 'creator',
@@ -13,6 +14,18 @@ class BaseFileNode(object):
     def __init__(self, underlying, filesystem=None):
         self.underlying = underlying
         self.filesystem = filesystem
+
+    def meta(self):
+        self.__class__ = FileMetaInfo
+        return self
+
+    def contents(self):
+        self.__class__ = FileContent
+        return self
+
+    def xattrs(self):
+        self.__class__ = FileExtraAttributes
+        return self
 
 
 class FileMetaInfo(BaseFileNode):
@@ -61,7 +74,7 @@ class FileMetaInfo(BaseFileNode):
     def model(cls, api):
         """Swagger UI Model"""
         return api.model('FileMetaInfo', {
-            'name': fields.String(description='文件名', required=True),
+            'name': fields.String(title='文件名', description='文件名', required=True),
             'fid': fields.String(description='唯一标识', required=True),
             'mode': fields.Integer(description='文件模式', required=True),
             'dev': fields.String(description='所在设备'),
@@ -70,8 +83,8 @@ class FileMetaInfo(BaseFileNode):
             'group': fields.String(description='所在组'),
             'size': fields.Integer(description='文件大小', required=True),
             'access': fields.Integer(description='最后访问时间', required=True),
-            'modify': fields.Integer(description='最后修改时间', required=True),
-            'change': fields.Integer(description='最后变更时间', required=True),
+            'modify': fields.Integer(title='最后修改时间', description='上一次文件内容变动的时间', required=True),
+            'change': fields.Integer(title='最后变更时间', description='上一次文件信息变动的时间', required=True),
             'create': fields.Integer(description='创建时间'),
             'creator': fields.Integer(description='创建者'),
         })
@@ -142,15 +155,53 @@ class FileContent(BaseFileNode):
         raise AttributeError
 
 
-class FileXAttrs(BaseFileNode):
+class FileExtraAttributes(BaseFileNode):
     def __init__(self, underlying, filesystem=None):
-        super(FileXAttrs, self).__init__(underlying, filesystem=filesystem)
+        super(FileExtraAttributes, self).__init__(underlying, filesystem=filesystem)
+
+    def check(self):
+        if 'xattrs' not in self.underlying:
+            self.underlying['xattrs'] = {}
+
+    @property
+    def props(self):
+        self.check()
+        return self.underlying['xattrs']
 
     def __getattr__(self, attr_name):
+        self.check()
+        if attr_name in self.underlying['xattrs']:
+            self.underlying['xattrs'].get(attr_name)
         raise AttributeError
 
     def __setattr__(self, key, value):
-        raise AttributeError
+        self.check()
+        self.underlying[key] = value
+
+
+class FileAccessControlList(AccessControlList, BaseFileNode):
+    def __init__(self, underlying, filesystem=None):
+        super(FileAccessControlList, self).__init__(underlying, filesystem=filesystem)
+
+    def owner(self):
+        pass
+
+    def group(self):
+        pass
+
+    def mode(self):
+        return self.underlying.get('mode', )
+
+    def aces(self):
+        return self.underlying.get('acl', [])
+
+    def add_or_update(self, stype, sid, allow_mask, deny_mask, inheritable, inherited):
+        pass
+
+    def remove(self, sid):
+        pass
+
+
 
 
 class FileStorage(BaseFileNode):
@@ -158,18 +209,21 @@ class FileStorage(BaseFileNode):
         super(FileStorage, self).__init__(underlying, filesystem=filesystem)
 
     def __getattr__(self, attr_name):
+        if attr_name in ['ancestors', 'left', 'right']:
+            return self.underlying.get(attr_name, None)
+        elif attr_name == u'path':
+            paths = self.underlying.get(u'ancestors', [])
+            paths.append(self.name)
+            return u'/' + u'/'.join(paths)
+        elif attr_name == u'parent_path':
+            paths = self.underlying.get(u'ancestors', [])
+            return u'/' + u'/'.join(paths)
+        elif attr_name == u'parent':
+            return FileObject(self.parent_path, filesystem=self.filesystem)
         raise AttributeError
 
-    def __init__(self,
-                 meta,  # 基本信息
-                 content,  # 内容信息
-                 xattrs,  # 扩展属性
-                 path,   # 路径
-                 parent,  # 父节点
-                 left,   # 左序
-                 right  # 右序
-                 ):
-        pass
+    def __setattr__(self, key, value):
+        raise AttributeError
 
 
 class FileObject(object):
