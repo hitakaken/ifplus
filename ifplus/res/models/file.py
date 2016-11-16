@@ -4,27 +4,30 @@ import stat
 from pymongo import IndexModel, ASCENDING, DESCENDING
 from ifplus.restful.patched import fields
 
+META_ATTRIBUTE_NAMES = ['fid', 'dev', 'nlink', 'size',
+                        'mode', 'uid', 'gid', 'create', 'creator',
+                        'atime', 'mtime', 'ctime']
 
-class FileMetaInfo(object):
-    def __init__(self,
-                 name=None, fid=None, dev=None,
-                 mode=None, uid=None, gid=None,
-                 nlink=None, size=None,
-                 atime=None, mtime=None, ctime=None,
-                 create=None, creator=None):
-        self.name = name
-        self.fid = fid
-        self.dev = dev
-        self.mode = mode
-        self.uid = uid
-        self.gid = gid
-        self.nlink = nlink
-        self.size = size
-        self.atime = atime
-        self.mtime = mtime
-        self.ctime = ctime
-        self.create = create
-        self.creator = creator
+
+class BaseFileNode(object):
+    def __init__(self, underlying, filesystem=None):
+        self.underlying = underlying
+        self.filesystem = filesystem
+
+
+class FileMetaInfo(BaseFileNode):
+    def __init__(self, underlying, filesystem=None):
+        super(FileMetaInfo, self).__init__(underlying, filesystem=filesystem)
+
+    def __getattr__(self, attr_name):
+        if attr_name in META_ATTRIBUTE_NAMES:
+            return self.underlying.get(attr_name, None)
+        raise AttributeError
+
+    def __setattr__(self, key, value):
+        if key in META_ATTRIBUTE_NAMES:
+            self.underlying[key] = value
+        raise AttributeError
 
     def is_file(self):
         """是否普通文件"""
@@ -100,29 +103,63 @@ class FileMetaInfo(object):
         IndexModel([('ctime', DESCENDING), ('mtime', DESCENDING)], name='time_stamp'),
     ]
 
-    @classmethod
-    def parse(cls, raw):
-        """解析原始记录(Mongo, ES等)"""
-        return FileMetaInfo(
-            name=raw['name'], fid=raw['_id'], dev=raw['dev'] if 'dev' in raw else None,
-            mode=raw['mode'], uid=raw['uid'] if 'uid' in raw else None, gid=raw['gid'] if 'gid' in raw else None,
-            nlink=raw['nlink'], size=raw['size'],
-            atime=raw['atime'], mtime=raw['mtime'], ctime=raw['ctime'],
-            create=raw['create'] if 'create' in raw else None, creator=raw['creator'] if 'creator' in raw else None
-        )
+CONTENT_TYPE_UNKNOWN = 0
+CONTENT_TYPE_EMBED_TEXT = 1
+CONTENT_TYPE_EMBED_OBJECT = 2
+CONTENT_TYPE_LOCAL = 3
+CONTENT_TYPE_REMOTE = 4
 
 
-class FileContent(object):
-    def __init__(self, type):
-        pass
+class FileContent(BaseFileNode):
+    def __init__(self, underlying, filesystem=None):
+        super(FileContent, self).__init__(underlying, filesystem=filesystem)
+
+    def __getattr__(self, attr_name):
+        if attr_name == 'ctype':
+            self.underlying.get('ctype', CONTENT_TYPE_UNKNOWN)
+        elif attr_name == 'content':
+            content_type = self.underlying.get('ctype', CONTENT_TYPE_UNKNOWN)
+            if content_type <= CONTENT_TYPE_EMBED_OBJECT:
+                return self.underlying.get('content', None)
+            elif self.filesystem is not None:
+                return self.filesystem.read(self.underlying)
+        raise AttributeError
+
+    def __setattr__(self, key, value):
+        if key == 'ctype':
+            self.underlying[key] = value
+        elif key == 'content':
+            content_type = self.underlying.get('ctype', CONTENT_TYPE_UNKNOWN)
+            if content_type == CONTENT_TYPE_UNKNOWN:
+                if type(content_type) is str or type(content_type) is unicode:
+                    self.underlying['ctype'] = CONTENT_TYPE_EMBED_TEXT
+                elif type(content_type) is dict or type(content_type) is list:
+                    self.underlying['ctype'] = CONTENT_TYPE_EMBED_OBJECT
+            if content_type <= 2:
+                self.underlying[key] = value
+            elif self.filesystem is not None:
+                self.filesystem.write(self.underlying, value)
+        raise AttributeError
 
 
-class FileXAttrs(object):
-    def __init__(self):
-        pass
+class FileXAttrs(BaseFileNode):
+    def __init__(self, underlying, filesystem=None):
+        super(FileXAttrs, self).__init__(underlying, filesystem=filesystem)
+
+    def __getattr__(self, attr_name):
+        raise AttributeError
+
+    def __setattr__(self, key, value):
+        raise AttributeError
 
 
-class FileStorage(object):
+class FileStorage(BaseFileNode):
+    def __init__(self, underlying, filesystem=None):
+        super(FileStorage, self).__init__(underlying, filesystem=filesystem)
+
+    def __getattr__(self, attr_name):
+        raise AttributeError
+
     def __init__(self,
                  meta,  # 基本信息
                  content,  # 内容信息
