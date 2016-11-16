@@ -173,10 +173,13 @@ class FileStorage(BaseFileNode):
 
 
 class FileObject(object):
-    def __init__(self, path, storage=None):
-        pass
+    def __init__(self, path, underlying=None, filesystem=None):
+        self.path = path
+        self.underlying = underlying
+        self.filesystem = filesystem
 
     def load(self):
-        pass
+        if self.underlying is None and self.filesystem is not None:
+            self.underlying = self.filesystem.load(self.path)
 
 
