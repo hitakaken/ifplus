@@ -13,6 +13,7 @@ install_requires = [
     'python-ldap',
     'PyJWT',
     'flask-restplus',
+    'bravado',
     'apispec',
     'webargs',
     'flask-marshmallow',

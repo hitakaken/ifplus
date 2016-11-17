@@ -79,9 +79,9 @@ class FileMetaInfo(BaseFileNode):
         return stat.S_ISSOCK(self.mode)
 
     @classmethod
-    def model(cls, api):
+    def model(cls, ns):
         """Swagger UI Model"""
-        return api.model('FileMetaInfo', {
+        return ns.model('FileMetaInfo', {
             'name': fields.String(title='文件名', description='文件名', required=True),
             'fid': fields.String(description='唯一标识', required=True),
             'mode': fields.Integer(description='文件模式', required=True),
@@ -165,9 +165,9 @@ class FileContent(BaseFileNode):
         raise AttributeError
 
     @classmethod
-    def model(cls, api):
+    def model(cls, ns):
         """Swagger UI Model"""
-        return api.model('FileMetaInfo', {
+        return ns.model('FileMetaInfo', {
             'name': fields.String(title='文件名', description='文件名', required=True),
             'ctype': fields.String(description='文件形式', required=True),
             'content': fields.String(description='文件内容', required=True)
@@ -238,9 +238,9 @@ class FileAccessControlList(AccessControlList, BaseFileNode):
         self.underlying['acl'] = aces
 
     @classmethod
-    def model(cls, api):
+    def model(cls, ns):
         """Swagger UI Model"""
-        return api.mode("FileACL", {
+        return ns.model("FileACL", {
             'owner': fields.String(description='所有者'),
             'group': fields.String(description='所在组'),
             'mode': fields.Integer(description='文件模式', required=True),
