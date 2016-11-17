@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .operations import Operations
+from ..base.operations import Operations
 
 
 class FileMonitor(Operations):

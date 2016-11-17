@@ -146,3 +146,12 @@ class Operations(object):
     @abstractmethod
     def write(self, path, data, offset, fh):
         raise FuseOSError(EROFS)
+
+    @abstractmethod
+    def getfacl(self, path):
+        raise FuseOSError(EOPNOTSUPP)
+
+    @abstractmethod
+    def setfacl(self, path, ace):
+        raise FuseOSError(EOPNOTSUPP)
+

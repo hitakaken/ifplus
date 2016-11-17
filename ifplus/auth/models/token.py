@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from flask_login import UserMixin
 
+ADMIN_ROLE = u''
+
 
 class UserSession(UserMixin):
     def __init__(self, uid, alias=None, roles=None, groups=None):
@@ -21,3 +23,8 @@ class UserSession(UserMixin):
         for group in self.groups:
             sids.append(u'g:' + group)
         return sids
+
+    @property
+    def is_admin(self):
+        return ADMIN_ROLE in self.roles
+

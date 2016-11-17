@@ -27,6 +27,14 @@ class BaseFileNode(object):
         self.__class__ = FileExtraAttributes
         return self
 
+    def acl(self):
+        self.__class__ = FileAccessControlList
+        return self
+
+    def node(self):
+        self.__class__ = FileTreeNode
+        return self
+
 
 class FileMetaInfo(BaseFileNode):
     def __init__(self, underlying, filesystem=None):
@@ -79,7 +87,7 @@ class FileMetaInfo(BaseFileNode):
             'mode': fields.Integer(description='文件模式', required=True),
             'dev': fields.String(description='所在设备'),
             'nlink': fields.Integer(description='链接数', required=True),
-            'owner': fields.String(description='拥有者'),
+            'owner': fields.String(description='所有者'),
             'group': fields.String(description='所在组'),
             'size': fields.Integer(description='文件大小', required=True),
             'access': fields.Integer(description='最后访问时间', required=True),
@@ -128,7 +136,9 @@ class FileContent(BaseFileNode):
         super(FileContent, self).__init__(underlying, filesystem=filesystem)
 
     def __getattr__(self, attr_name):
-        if attr_name == 'ctype':
+        if attr_name == 'name':
+            self.underlying.get('name')
+        elif attr_name == 'ctype':
             self.underlying.get('ctype', CONTENT_TYPE_UNKNOWN)
         elif attr_name == 'content':
             content_type = self.underlying.get('ctype', CONTENT_TYPE_UNKNOWN)
@@ -153,6 +163,15 @@ class FileContent(BaseFileNode):
             elif self.filesystem is not None:
                 self.filesystem.write(self.underlying, value)
         raise AttributeError
+
+    @classmethod
+    def model(cls, api):
+        """Swagger UI Model"""
+        return api.model('FileMetaInfo', {
+            'name': fields.String(title='文件名', description='文件名', required=True),
+            'ctype': fields.String(description='文件形式', required=True),
+            'content': fields.String(description='文件内容', required=True)
+        })
 
 
 class FileExtraAttributes(BaseFileNode):
@@ -184,45 +203,78 @@ class FileAccessControlList(AccessControlList, BaseFileNode):
         super(FileAccessControlList, self).__init__(underlying, filesystem=filesystem)
 
     def owner(self):
-        pass
+        return self.underlying.get('uid', None)
 
     def group(self):
-        pass
+        return self.underlying.get('gid', None)
 
     def mode(self):
-        return self.underlying.get('mode', )
+        return self.underlying.get('mode')
 
     def aces(self):
         return self.underlying.get('acl', [])
 
-    def add_or_update(self, stype, sid, allow_mask, deny_mask, inheritable, inherited):
-        pass
+    def add_or_update(self, sid, allow_mask, deny_mask, grant_mask, inheritable, inherited):
+        aces = []
+        found = False
+        new_ace = {'sid': sid,
+                   'allow': allow_mask, 'deny': deny_mask, 'grant': grant_mask,
+                   'ihb': inheritable, 'ihd': inherited}
+        for ace in self.aces():
+            if ace.get('sid') == sid:
+                aces.append(new_ace)
+                found = True
+            else:
+                aces.append(ace)
+        if not found:
+            aces.append(new_ace)
+        self.underlying['acl'] = aces
 
     def remove(self, sid):
-        pass
+        aces = []
+        for ace in self.aces():
+            if ace.get('sid') != sid:
+                aces.append(ace)
+        self.underlying['acl'] = aces
+
+    @classmethod
+    def model(cls, api):
+        """Swagger UI Model"""
+        return api.mode("FileACL", {
+            'owner': fields.String(description='所有者'),
+            'group': fields.String(description='所在组'),
+            'mode': fields.Integer(description='文件模式', required=True),
+            'acl': fields.List(fields.String, description='ACL条目')
+        })
 
 
-
-
-class FileStorage(BaseFileNode):
+class FileTreeNode(BaseFileNode):
     def __init__(self, underlying, filesystem=None):
-        super(FileStorage, self).__init__(underlying, filesystem=filesystem)
+        super(FileTreeNode, self).__init__(underlying, filesystem=filesystem)
 
     def __getattr__(self, attr_name):
         if attr_name in ['ancestors', 'left', 'right']:
             return self.underlying.get(attr_name, None)
-        elif attr_name == u'path':
-            paths = self.underlying.get(u'ancestors', [])
+        elif attr_name == 'path':
+            paths = self.underlying.get('ancestors', [])
             paths.append(self.name)
             return u'/' + u'/'.join(paths)
-        elif attr_name == u'parent_path':
-            paths = self.underlying.get(u'ancestors', [])
+        elif attr_name == 'parent_path':
+            paths = self.underlying.get('ancestors', [])
             return u'/' + u'/'.join(paths)
-        elif attr_name == u'parent':
+        elif attr_name == 'parent':
             return FileObject(self.parent_path, filesystem=self.filesystem)
         raise AttributeError
 
     def __setattr__(self, key, value):
+        if key in ['ancestors', 'left', 'right']:
+            self.underlying[key] = value
+        elif key == 'path':
+            pass
+        elif key == 'parent_path':
+            pass
+        elif key == 'parent':
+            pass
         raise AttributeError
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # bitsAllSet
-from .operations import Operations
+from ..base.operations import Operations
 
 
 class FileSystem(Operations):
