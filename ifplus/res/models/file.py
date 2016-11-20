@@ -197,6 +197,15 @@ class FileExtraAttributes(BaseFileNode):
         self.check()
         self.underlying[key] = value
 
+    @classmethod
+    def model(cls, ns):
+        return ns.model('FileXAttrs', {
+            'xattrs': fields.List(fields.Nested({
+                'key': fields.String(description='属性名'),
+                'value': fields.String(description='属性值')
+            }))
+        })
+
 
 class FileAccessControlList(AccessControlList, BaseFileNode):
     def __init__(self, underlying, filesystem=None):
@@ -277,15 +286,61 @@ class FileTreeNode(BaseFileNode):
             pass
         raise AttributeError
 
+    @classmethod
+    def model(cls, ns):
+        return ns.model('FileNode', {
+            'path': fields.String(description='文件路径', required=True),
+            'parent': fields.String(description='父节点', required=True),
+            'left': fields.Integer(description='左序'),
+            'right': fields.Integer(description='右序'),
+        })
+
 
 class FileObject(object):
-    def __init__(self, path, underlying=None, filesystem=None):
-        self.path = path
+    def __init__(self, file_path, underlying=None, filesystem=None):
+        self.file_path = file_path
         self.underlying = underlying
         self.filesystem = filesystem
 
     def load(self):
         if self.underlying is None and self.filesystem is not None:
-            self.underlying = self.filesystem.load(self.path)
+            self.underlying = self.filesystem.load(self.file_path)
 
+    def meta(self):
+        if self.underlying is None:
+            self.load()
+        return FileMetaInfo(self.underlying, filesystem=self.filesystem)
 
+    def contents(self):
+        if self.underlying is None:
+            self.load()
+        return FileContent(self.underlying, filesystem=self.filesystem)
+
+    def xattrs(self):
+        if self.underlying is None:
+            self.load()
+        return FileExtraAttributes(self.underlying, filesystem=self.filesystem)
+
+    def acl(self):
+        if self.underlying is None:
+            self.load()
+        return FileAccessControlList(self.underlying, filesystem=self.filesystem)
+
+    def node(self):
+        if self.underlying is None:
+            self.load()
+        return FileTreeNode(self.underlying, filesystem=self.filesystem)
+
+    @classmethod
+    def model(cls, ns, meta_model, content_model, acl_model):
+        return ns.model('FileObject', {
+            'path': fields.String(description='文件路径', required=True),
+            'parent': fields.String(description='父节点', required=True),
+            'meta': fields.Nested(meta_model, description='文件元信息'),
+            'content': fields.Nested(content_model, description='文件内容信息'),
+            'xattrs': fields.List(fields.Nested({
+                'key': fields.String(description='属性名'),
+                'value': fields.String(description='属性值')
+            })),
+            'acl': fields.Nested(acl_model),
+        })

@@ -3,12 +3,15 @@ from errno import *
 from ..base.operations import Operations, FuseOSError
 
 
-class LocalDevice(Operations):
+class LinuxFSDevice(Operations):
     def __init__(self, root, users, groups, facl):
         self.root = root  # 设备根目录
-        self.facl = facl  # 设备访问权限
         self.users = users  # 全局用户与本地用户映射关系
         self.groups = groups  # 全局用户组与本地用户组映射关系
+        self.facl = facl  # 设备访问权限
+
+    def real_path(self, path):
+        return path.join(self.root, path)
 
     def access(self, path, mode, **kwargs):
         return 0

@@ -2,10 +2,12 @@
 from flask import Flask
 import settings
 from flask_cors import CORS
+from ifplus import Application
 
 app = Flask(__name__)
 app.config.from_object(settings)
 cors = CORS(app=app)
+server = Application(app)
 
 if __name__ == '__main__':
     app.run(debug=True)

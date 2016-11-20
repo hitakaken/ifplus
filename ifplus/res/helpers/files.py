@@ -2,6 +2,7 @@
 # bitsAllSet
 from errno import *
 from ..base.operations import Operations, FuseOSError
+from ..models.file import *
 
 
 class VirtualFileSystem(Operations):
@@ -10,6 +11,14 @@ class VirtualFileSystem(Operations):
         self.devices = devices  # 设备列表
 
     def register(self, device):
+        pass
+
+    def file_node(self, file_path):
+        """根据路径获取文件节点"""
+
+        pass
+
+    def load(self, file_path):
         pass
 
     def access(self, path, mode, **kwargs):
@@ -39,7 +48,7 @@ class VirtualFileSystem(Operations):
     def getattr(self, path, fh=None, **kwargs):
         if path != '/':
             raise FuseOSError(ENOENT)
-        return dict(mode=(S_ISDIR | 0o750), nlink=2)
+        return dict()
 
     def getxattr(self, path, name, position=0, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
@@ -115,8 +124,3 @@ class VirtualFileSystem(Operations):
     def setfacl(self, path, ace, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
 
-
-
-
-
-    

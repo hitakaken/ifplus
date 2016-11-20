@@ -4,7 +4,7 @@ from flask_login import UserMixin
 ADMIN_ROLE = u''
 
 
-class UserSession(UserMixin):
+class UserToken(UserMixin):
     def __init__(self, uid, alias=None, roles=None, groups=None):
         self.id = uid
         self.alias = [] if alias is None else alias
@@ -27,4 +27,10 @@ class UserSession(UserMixin):
     @property
     def is_admin(self):
         return ADMIN_ROLE in self.roles
+
+    @classmethod
+    def model(cls, ns):
+        parser = ns.parser()
+        parser.add_argument('AuthToken', location='headers')
+        return parser
 

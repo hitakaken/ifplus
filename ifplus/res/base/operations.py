@@ -3,6 +3,8 @@ from abc import ABCMeta, abstractmethod
 from errno import *
 from os import strerror
 from stat import S_ISDIR
+from werkzeug.datastructures import FileStorage
+
 from ifplus.restful.patched import fields
 
 
@@ -27,9 +29,22 @@ class Operations(object):
             raise FuseOSError(EFAULT)
         return getattr(self, op)(*args, **kwargs)
 
+    @classmethod
+    def fs_action_response_model(cls, ns):
+        return ns.model('FsActionResponse', {
+            'status': fields.Integer(description='状态'),
+            'msg': fields.String(desctipion='消息')
+        })
+
     @abstractmethod
     def access(self, path, mode, **kwargs):
         return 0
+
+    @classmethod
+    def access_request_model(cls, ns):
+        parser = ns.parser()
+        parser.add_argument('mode', location='args')
+        return parser
 
     @abstractmethod
     def chmod(self, path, mode, **kwargs):
@@ -154,6 +169,11 @@ class Operations(object):
     @abstractmethod
     def write(self, path, data, offset, fh, **kwargs):
         raise FuseOSError(EROFS)
+
+    @classmethod
+    def upload_model(cls, ns):
+        parser = ns.parser()
+        parser.add_argument('file', location='files', type=FileStorage, required=True)
 
     @abstractmethod
     def getfacl(self, path, **kwargs):
