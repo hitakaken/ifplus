@@ -10,20 +10,6 @@ META_ATTRIBUTE_NAMES = ['name','dev', 'nlink', 'size',
                         'atime', 'mtime', 'ctime']
 
 
-def zip_mode(mode):
-    arr = ['0']
-    for i in range(0, 18, 3):
-        val = 0
-        if mode[i]:
-            val += 4
-        if mode[i+1]:
-            val += 2
-        if mode[i+2]:
-            val += 1
-        arr.append(str(val))
-    return unicode(''.join(arr))
-
-
 class BaseFileNode(object):
     def __init__(self, underlying, filesystem=None):
         self.__dict__['underlying'] = underlying
@@ -117,7 +103,7 @@ class FileMetaInfo(BaseFileNode):
     def as_dict(self):
         result = {
             'name': self.name, 'fid': str(self.fid),
-            'mode': zip_mode(self.mode), 'nlink': self.nlink, 'size': self.size,
+            'mode': u'%06o' % (0o0177777 & self.mode), 'nlink': self.nlink, 'size': self.size,
             'access': self.atime, 'modify': self.mtime, 'change': self.ctime
         }
         if self.dev is not None:
@@ -268,7 +254,7 @@ class FileAccessControlList(AccessControlList, BaseFileNode):
         return ns.model("FileACL", {
             'owner': fields.String(description='所有者'),
             'group': fields.String(description='所在组'),
-            'mode': fields.Integer(description='文件模式', required=True),
+            'mode': fields.String(description='文件模式', required=True),
             'acl': fields.List(fields.String, description='ACL条目')
         })
 

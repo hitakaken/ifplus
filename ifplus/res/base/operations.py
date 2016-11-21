@@ -184,6 +184,12 @@ class Operations(object):
     def upload_model(cls, ns):
         parser = ns.parser()
         parser.add_argument('file', location='files', type=FileStorage, required=True)
+        parser.add_argument('usr', location='args')
+        parser.add_argument('grp', location='args')
+        parser.add_argument('mod', location='args')
+        parser.add_argument('fce', type=bool, location='args')
+        parser.add_argument('ovw', type=bool, location='args')
+        return parser
 
     @abstractmethod
     def getfacl(self, path, **kwargs):

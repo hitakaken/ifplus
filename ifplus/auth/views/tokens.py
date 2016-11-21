@@ -37,7 +37,7 @@ class Authenticate(Resource):
         """
         args = authenticate_request.parse_args()
         user = app.rbac.users.authenticate(args['username'], args['password'])
-        return {'token': app.rbac.tokens.token(user)}
+        return {'token': app.tokens.token(user)}
 
 
 @ns.route('/check')
@@ -53,7 +53,7 @@ class CheckToken(Resource):
         :raises Unauthorized: Check Token Failed
         """
         args = token_request.parse_args()
-        user = app.rbac.tokens.load_user_from_token(args['token'])
+        user = app.tokens.load_user_from_token(args['token'])
         return {'token': args['token']}
 
 
@@ -70,4 +70,4 @@ class RefreshToken(Resource):
         """
         args = token_request.parse_args()
         user = app.rbac.tokens.load_user_from_token(args['token'])
-        return {'token': app.rbac.tokens.token(user)}
+        return {'token': app.tokens.token(user)}

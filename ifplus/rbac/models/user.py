@@ -25,10 +25,12 @@ class User(PropertiesEntity):
     @classmethod
     def model(cls, ns):
         return ns.model('UserInfo', {
-            'dsp': fields.String(description='显示名', required=True)
+            'dsp': fields.String(description='显示名', required=True),
+            'id': fields.String(description='唯一标识')
         })
 
     def as_dict(self):
         return {
-            'dsp': get_first(self.attrs['displayName'])
+            'dsp': get_first(self.attrs['displayName']),
+            'id': self.id
         }

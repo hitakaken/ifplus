@@ -7,7 +7,7 @@ from ..devices import MongoDevice
 
 class VirtualDevice(MongoDevice):
     def __init__(self, root, did=None, fs=None, mongo=None, **kwargs):
-        super(VirtualDevice, self).__init__(mongo, root=root, **kwargs)
+        super(VirtualDevice, self).__init__(mongo, **kwargs)
         self.id = did
         self.root = root  # 文件根节点
         self.fs = fs

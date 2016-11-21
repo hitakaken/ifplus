@@ -2,6 +2,7 @@
 from flask_pymongo import PyMongo
 from .restful import Rest
 from .rbac import RBAC
+from .auth import AuthManager
 from .res import VFS
 from .chat import ChatServer
 
@@ -23,6 +24,7 @@ class Application(object):
         self.mongo = PyMongo(app)
         setattr(app, 'mongo', self.mongo)
         self.rbac = RBAC(app=app, **kwargs)
+        self.auth = AuthManager(app=app, **kwargs)
         self.res = VFS(app=app,  mongo=self.mongo, **kwargs)
         self.chats = ChatServer(app=app, **kwargs)
 

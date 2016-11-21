@@ -111,7 +111,7 @@ class FileAction(Resource):
     @ns.doc(id='read')
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
-        return {}
+        return app.fs.open(file_path)
 
     @ns.expect(auth_token_model, upload_model)
     @ns.doc(id='write')
@@ -137,7 +137,7 @@ class FolderActions(Resource):
     @ns.expect(auth_token_model, mkdir_request_model)
     @ns.doc(id='mkdir')
     @ns.marshal_with(file_meta_model)
-    def post(self, file_path):
+    def put(self, file_path):
         file_path = normalize_file_path(file_path)
         args = mkdir_request_model.parse_args()
         kwargs = {}
@@ -155,6 +155,30 @@ class FolderActions(Resource):
         # kwargs['user] = current_user
         return app.fs.mkdir(file_path, mode, **kwargs).meta().as_dict()
 
+    @ns.expect(auth_token_model, mkdir_request_model, upload_model)
+    @ns.doc(id='mkdir')
+    @ns.marshal_with(file_meta_model)
+    def post(self, file_path):
+        args = upload_model.parse_args()
+        kwargs = {}
+        mode = args['mod'] if args['mod'] is not None else '750'
+        if mode_pattern.match(mode):
+            mode = int(mode, 8)
+        else:
+            raise FuseOSError(EINVAL, http_status=400)
+        kwargs['mode'] = mode
+        if args['usr'] is not None:
+            kwargs['owner'] = args['usr']
+        if args['grp'] is not None:
+            kwargs['group'] = args['grp']
+        if args['fce'] is not None:
+            kwargs['force'] = args['fce']
+        if args['ovw'] is not None:
+            kwargs['overwrite'] = args['ovw']
+        upload_file = args['file']
+        file_path = normalize_file_path(file_path + '/' + upload_file.filename)
+        return app.fs.write(file_path, upload_file.read(), 0, 0, **kwargs)
+
     @ns.expect(auth_token_model)
     @ns.doc(id='rmdir')
     def delete(self, file_path):
@@ -169,8 +193,8 @@ class StatfsAction(Resource):
     @ns.marshal_with(file_meta_model)
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
-        # print file_path
-        return {}
+        kwargs = {}
+        return app.fs.statfs(file_path, **kwargs).meta().as_dict()
 
 
 @ns.route('/xattrs/<path:file_path>')

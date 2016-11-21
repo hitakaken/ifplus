@@ -4,7 +4,7 @@ from .views.tokens import ns
 from .helpers.tokens import TokenHelper
 
 
-class Auth(object):
+class AuthManager(object):
     def __init__(self, app=None, **kwargs):
         self.app = app
         self.tokens = None
@@ -20,3 +20,4 @@ class Auth(object):
         self.login_manager.request_loader(self.tokens.load_user_from_request)
         app.api.add_namespace(ns)
         setattr(app, 'tokens', self.tokens)
+        setattr(app, 'auth_manager', self)

@@ -94,14 +94,17 @@ class VirtualFileSystem(MongoDevice):
     def mknod(self, path, mode, dev, **kwargs):
         raise FuseOSError(EROFS)
 
-    def open(self, path, flags, **kwargs):
-        return 0
+    # def open(self, path, flags, **kwargs):
+    #    return 0
 
     def opendir(self, path, **kwargs):
         return 0
 
     def read(self, path, size, offset, fh, **kwargs):
         return FuseOSError(EIO)
+
+    # def read(self, path, size, offset, fh, **kwargs):
+    #    return FuseOSError(EIO)
 
     def readdir(self, path, fh, **kwargs):
         return ['.', '..']
@@ -127,9 +130,6 @@ class VirtualFileSystem(MongoDevice):
     def setxattr(self, path, name, value, options, position=0, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
 
-    def statfs(self, path, **kwargs):
-        return {}
-
     def symlink(self, target, source, **kwargs):
         """creates a symlink `target -> source` (e.g. ln -s source target)"""
         raise FuseOSError(EROFS)
@@ -144,8 +144,8 @@ class VirtualFileSystem(MongoDevice):
         """Times is a (atime, mtime) tuple. If None use current time."""
         return 0
 
-    def write(self, path, data, offset, fh, **kwargs):
-        raise FuseOSError(EROFS)
+    # def write(self, path, data, offset, fh, **kwargs):
+    #     raise FuseOSError(EROFS)
 
     def getfacl(self, path, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
