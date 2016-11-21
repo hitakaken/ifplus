@@ -9,10 +9,8 @@ Flask-Cors
 apispec
 webargs
 flask-marshmallow
-# flask-cors
 flatdict
 bidict
-bson
 pymongo
 Flask-PyMongo
 watchdog

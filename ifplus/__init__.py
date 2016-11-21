@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
-from flask.ext.pymongo import PyMongo
+from flask_pymongo import PyMongo
 from .restful import Rest
+from .rbac import RBAC
 from .res import VFS
+from .chat import ChatServer
 
 
 class Application(object):
     def __init__(self, app=None, **kwargs):
         self.rest = None
         self.mongo = None
+        self.rbac = None
         self.auth = None
         self.res = None
         self.pm = None
-        self.chat = None
+        self.chats = None
         if app is not None:
             self.init_app(app, **kwargs)
 
@@ -19,6 +22,9 @@ class Application(object):
         self.rest = Rest(app, **kwargs)
         self.mongo = PyMongo(app)
         setattr(app, 'mongo', self.mongo)
-        self.res = VFS(app, **kwargs)
+        self.rbac = RBAC(app=app, **kwargs)
+        self.res = VFS(app=app,  mongo=self.mongo, **kwargs)
+        self.chats = ChatServer(app=app, **kwargs)
 
         self.rest.register()
+        self.chats.register()

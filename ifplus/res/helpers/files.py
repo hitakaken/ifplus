@@ -1,21 +1,54 @@
 # -*- coding: utf-8 -*-
 # bitsAllSet
+import os
 from errno import *
 from ..base.operations import Operations, FuseOSError
-from ..models.file import *
+from ..models.file import FileMetaInfo, FileTreeNode, FileObject
+from .local.virtual import VirtualDevice
+from .devices import MongoDevice
 
 
-class VirtualFileSystem(Operations):
-    def __init__(self, files, devices):
-        self.files = files  # MongoDB Collection: files
-        self.devices = devices  # 设备列表
+class VirtualFileSystem(MongoDevice):
+    def __init__(self, mongo, devices=None, **kwargs):
+        super(VirtualFileSystem, self).__init__(mongo, **kwargs)
+        self.mongo = mongo  # MongoDB Collection: files
+        self.fs = self
+        if devices is None:
+            devices = {
+                '/': VirtualDevice(u'/', fs=self)
+            }
+        self.devices = devices
 
     def register(self, device):
         pass
 
+    def start(self):
+        collection_names = self.mongo.db.collection_names()
+        if 'files' not in collection_names:
+            self.mongo.db.create_collection('files')
+        indexes = self.mongo.db.files.index_information()
+        indexes_to_create = []
+        for file_index in FileMetaInfo.MONGO_INDEXES + FileTreeNode.MONGO_INDEXES:
+            if file_index.document['name'] not in indexes:
+                indexes_to_create.append(file_index)
+        if len(indexes_to_create) > 0:
+            self.mongo.db.files.create_indexes(indexes_to_create)
+
+    def device_of(self, file_path):
+        path = file_path
+        while path != '/':
+            folder = os.path.dirname(path)
+            if folder in self.devices:
+                return self.devices[folder]
+        return self.devices['/']
+
+    def device_path(self, file_path, device=None):
+        device = device if device is not None else self.device_of(file_path)
+        return os.path.relpath(file_path, device.root)
+
     def file_object(self, file_path):
         """根据路径获取文件节点"""
-        return FileObject(file_path, filesystem=self)
+        return FileObject(file_path, filesystem=self, device=self.device_of(file_path))
 
     def load(self, file_path):
         pass
@@ -57,9 +90,6 @@ class VirtualFileSystem(Operations):
 
     def listxattr(self, path, **kwargs):
         return []
-
-    def mkdir(self, path, mode, **kwargs):
-        raise FuseOSError(EROFS)
 
     def mknod(self, path, mode, dev, **kwargs):
         raise FuseOSError(EROFS)

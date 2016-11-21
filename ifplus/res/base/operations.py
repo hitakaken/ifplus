@@ -97,6 +97,15 @@ class Operations(object):
     def mkdir(self, path, mode, **kwargs):
         raise FuseOSError(EROFS)
 
+    @classmethod
+    def mkdir_request_model(cls, ns):
+        parser = ns.parser()
+        parser.add_argument('usr', location='args')
+        parser.add_argument('grp', location='args')
+        parser.add_argument('mod', location='args')
+        parser.add_argument('fce', type=bool, location='args')
+        return parser
+
     @abstractmethod
     def mknod(self, path, mode, dev, **kwargs):
         raise FuseOSError(EROFS)

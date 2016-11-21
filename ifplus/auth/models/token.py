@@ -5,7 +5,8 @@ ADMIN_ROLE = u''
 
 
 class UserToken(UserMixin):
-    def __init__(self, uid, alias=None, roles=None, groups=None):
+    def __init__(self, account, uid, alias=None, roles=None, groups=None):
+        self.account = account
         self.id = uid
         self.alias = [] if alias is None else alias
         self.roles = [] if roles is None else roles

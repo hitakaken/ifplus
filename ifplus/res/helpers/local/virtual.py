@@ -1,20 +1,17 @@
 # -*- coding: utf-8 -*-
+import os
 from errno import *
 from ...base.operations import Operations, FuseOSError
-from ...models.file import FileObject
+from ..devices import MongoDevice
 
 
-class VirtualDevice(Operations):
-    def __init__(self, root, fs=None):
+class VirtualDevice(MongoDevice):
+    def __init__(self, root, did=None, fs=None, mongo=None, **kwargs):
+        super(VirtualDevice, self).__init__(mongo, root=root, **kwargs)
+        self.id = did
         self.root = root  # 文件根节点
         self.fs = fs
-
-    def real_path(self, path):
-        return path.join(self.root['root'], path)
-
-    def file_object(self, path):
-        real_path = self.real_path(path)
-        return FileObject(real_path, filesystem=self.fs, device=self)
+        self.mongo = mongo if mongo is not None else fs.mongo
 
     def access(self, path, mode, **kwargs):
         return 0
@@ -43,7 +40,7 @@ class VirtualDevice(Operations):
     def getattr(self, path, fh=None, **kwargs):
         if path != '/':
             raise FuseOSError(ENOENT)
-        return dict(mode=(S_ISDIR | 0o750), nlink=2)
+        return dict()
 
     def getxattr(self, path, name, position=0, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
@@ -53,9 +50,6 @@ class VirtualDevice(Operations):
 
     def listxattr(self, path, **kwargs):
         return []
-
-    def mkdir(self, path, mode, **kwargs):
-        raise FuseOSError(EROFS)
 
     def mknod(self, path, mode, dev, **kwargs):
         raise FuseOSError(EROFS)

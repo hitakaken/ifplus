@@ -5,15 +5,29 @@ from pymongo import IndexModel, ASCENDING, DESCENDING
 from ifplus.restful.patched import fields
 from .acl import AccessControlList
 
-META_ATTRIBUTE_NAMES = ['fid', 'dev', 'nlink', 'size',
+META_ATTRIBUTE_NAMES = ['name','dev', 'nlink', 'size',
                         'mode', 'uid', 'gid', 'create', 'creator',
                         'atime', 'mtime', 'ctime']
 
 
+def zip_mode(mode):
+    arr = ['0']
+    for i in range(0, 18, 3):
+        val = 0
+        if mode[i]:
+            val += 4
+        if mode[i+1]:
+            val += 2
+        if mode[i+2]:
+            val += 1
+        arr.append(str(val))
+    return unicode(''.join(arr))
+
+
 class BaseFileNode(object):
     def __init__(self, underlying, filesystem=None):
-        self.underlying = underlying
-        self.filesystem = filesystem
+        self.__dict__['underlying'] = underlying
+        self.__dict__['filesystem'] = filesystem
 
     def meta(self):
         self.__class__ = FileMetaInfo
@@ -41,8 +55,11 @@ class FileMetaInfo(BaseFileNode):
         super(FileMetaInfo, self).__init__(underlying, filesystem=filesystem)
 
     def __getattr__(self, attr_name):
-        if attr_name in META_ATTRIBUTE_NAMES:
+        if attr_name == 'fid':
+            return self.underlying['_id']
+        elif attr_name in META_ATTRIBUTE_NAMES:
             return self.underlying.get(attr_name, None)
+        print attr_name
         raise AttributeError
 
     def __setattr__(self, key, value):
@@ -84,24 +101,23 @@ class FileMetaInfo(BaseFileNode):
         return ns.model('FileMetaInfo', {
             'name': fields.String(title='文件名', description='文件名', required=True),
             'fid': fields.String(description='唯一标识', required=True),
-            'mode': fields.Integer(description='文件模式', required=True),
+            'mode': fields.String(description='文件模式', required=True),
             'dev': fields.String(description='所在设备'),
             'nlink': fields.Integer(description='链接数', required=True),
             'owner': fields.String(description='所有者'),
             'group': fields.String(description='所在组'),
             'size': fields.Integer(description='文件大小', required=True),
-            'access': fields.Integer(description='最后访问时间', required=True),
-            'modify': fields.Integer(title='最后修改时间', description='上一次文件内容变动的时间', required=True),
-            'change': fields.Integer(title='最后变更时间', description='上一次文件信息变动的时间', required=True),
-            'create': fields.Integer(description='创建时间'),
-            'creator': fields.Integer(description='创建者'),
+            'access': fields.DateTime(description='最后访问时间', required=True),
+            'modify': fields.DateTime(title='最后修改时间', description='上一次文件内容变动的时间', required=True),
+            'change': fields.DateTime(title='最后变更时间', description='上一次文件信息变动的时间', required=True),
+            'create': fields.DateTime(description='创建时间'),
+            'creator': fields.String(description='创建者'),
         })
 
-    @property
     def as_dict(self):
         result = {
-            'name': self.name, 'fid': self.fid,
-            'mode': self.mode, 'nlink': self.nlink, 'size': self.size,
+            'name': self.name, 'fid': str(self.fid),
+            'mode': zip_mode(self.mode), 'nlink': self.nlink, 'size': self.size,
             'access': self.atime, 'modify': self.mtime, 'change': self.ctime
         }
         if self.dev is not None:
@@ -167,7 +183,7 @@ class FileContent(BaseFileNode):
     @classmethod
     def model(cls, ns):
         """Swagger UI Model"""
-        return ns.model('FileMetaInfo', {
+        return ns.model('FileContent', {
             'name': fields.String(title='文件名', description='文件名', required=True),
             'ctype': fields.String(description='文件形式', required=True),
             'content': fields.String(description='文件内容', required=True)
@@ -294,6 +310,11 @@ class FileTreeNode(BaseFileNode):
             'left': fields.Integer(description='左序'),
             'right': fields.Integer(description='右序'),
         })
+
+    MONGO_INDEXES = [
+        IndexModel([('ancestors', ASCENDING), ('name', ASCENDING)], name='path'),
+        IndexModel([('parent', ASCENDING), ('name', ASCENDING)], name='parent_and_name'),
+    ]
 
 
 class FileObject(object):

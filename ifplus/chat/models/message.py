@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from pymongo import IndexModel, ASCENDING, DESCENDING
 
 
 class Message(object):
@@ -17,3 +18,7 @@ class Message(object):
                  exp=None,
                  **kwargs):
         pass
+
+    MONGO_INDEXES = [
+        IndexModel([('room', ASCENDING), ('ts', DESCENDING)], name='messages_in_room'),
+    ]
