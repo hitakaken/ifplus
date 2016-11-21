@@ -2,7 +2,7 @@
 from flask import current_app as app
 from ifplus.restful.patched import Namespace, Resource
 from ifplus.auth.models.token import UserToken
-from ..base.operations import Operations
+from ..base.operations import Operations, FuseOSError
 from ..models.file import *
 
 ns = Namespace('fs',
@@ -10,6 +10,19 @@ ns = Namespace('fs',
                version='1.0',
                description='文件管理 RESTful API',
                tags='file')
+
+# 错误 Schema
+errno_model = FuseOSError.model(ns)
+
+
+@ns.errorhandler(FuseOSError)
+@ns.marshal_with(errno_model, code=500, description='文件系统错误')
+def handle_fuse_os_error(error):
+    resp = {
+        'errno': error.errno,
+        'message': error.message
+    }
+    return resp, error.http_status
 
 # 认证 Schema
 auth_token_model = UserToken.model(ns)

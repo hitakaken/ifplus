@@ -6,13 +6,15 @@ from .views.vfs import ns
 class VFS(object):
     def __init__(self, app=None, **kwargs):
         self.fs = None
+        self.app = None
         if app is not None:
             self.app = app
             self.init_app(app, **kwargs)
 
     def init_app(self, app, **kwargs):
-        self.fs = VirtualFileSystem(None, None)
-        setattr(app, 'fs', self.fs)
-        app.api.add_namespace(ns)
+        self.app = app
+        self.fs = VirtualFileSystem(app.mongo.db.files, app.mongo.db.devices)
+        setattr(self.app, 'fs', self.fs)
+        self.app.api.add_namespace(ns)
 
 

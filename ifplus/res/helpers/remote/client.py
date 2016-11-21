@@ -1,24 +1,15 @@
 # -*- coding: utf-8 -*-
-# bitsAllSet
 from errno import *
-from ..base.operations import Operations, FuseOSError
-from ..models.file import *
+from bravado.requests_client import RequestsClient
+from bravado.client import SwaggerClient
+from ...base.operations import Operations, FuseOSError
 
 
-class VirtualFileSystem(Operations):
-    def __init__(self, files, devices):
-        self.files = files  # MongoDB Collection: files
-        self.devices = devices  # 设备列表
-
-    def register(self, device):
-        pass
-
-    def file_object(self, file_path):
-        """根据路径获取文件节点"""
-        return FileObject(file_path, filesystem=self)
-
-    def load(self, file_path):
-        pass
+class RemoteDevice(Operations):
+    def __init__(self, swagger_url, facl):
+        self.http_client = RequestsClient()
+        self.client = SwaggerClient.from_url(swagger_url, http_client=self.http_client)
+        self.facl = facl  # 设备访问权限
 
     def access(self, path, mode, **kwargs):
         return 0
@@ -47,7 +38,7 @@ class VirtualFileSystem(Operations):
     def getattr(self, path, fh=None, **kwargs):
         if path != '/':
             raise FuseOSError(ENOENT)
-        return dict()
+        return dict(mode=(S_ISDIR | 0o750), nlink=2)
 
     def getxattr(self, path, name, position=0, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
@@ -122,4 +113,3 @@ class VirtualFileSystem(Operations):
 
     def setfacl(self, path, ace, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
-

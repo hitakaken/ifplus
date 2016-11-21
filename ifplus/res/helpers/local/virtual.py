@@ -1,24 +1,20 @@
 # -*- coding: utf-8 -*-
-# bitsAllSet
 from errno import *
-from ..base.operations import Operations, FuseOSError
-from ..models.file import *
+from ...base.operations import Operations, FuseOSError
+from ...models.file import FileObject
 
 
-class VirtualFileSystem(Operations):
-    def __init__(self, files, devices):
-        self.files = files  # MongoDB Collection: files
-        self.devices = devices  # 设备列表
+class VirtualDevice(Operations):
+    def __init__(self, root, fs=None):
+        self.root = root  # 文件根节点
+        self.fs = fs
 
-    def register(self, device):
-        pass
+    def real_path(self, path):
+        return path.join(self.root['root'], path)
 
-    def file_object(self, file_path):
-        """根据路径获取文件节点"""
-        return FileObject(file_path, filesystem=self)
-
-    def load(self, file_path):
-        pass
+    def file_object(self, path):
+        real_path = self.real_path(path)
+        return FileObject(real_path, filesystem=self.fs, device=self)
 
     def access(self, path, mode, **kwargs):
         return 0
@@ -47,7 +43,7 @@ class VirtualFileSystem(Operations):
     def getattr(self, path, fh=None, **kwargs):
         if path != '/':
             raise FuseOSError(ENOENT)
-        return dict()
+        return dict(mode=(S_ISDIR | 0o750), nlink=2)
 
     def getxattr(self, path, name, position=0, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
@@ -122,4 +118,3 @@ class VirtualFileSystem(Operations):
 
     def setfacl(self, path, ace, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
-

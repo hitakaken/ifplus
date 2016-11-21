@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 from errno import *
-from bravado.requests_client import RequestsClient
-from bravado.client import SwaggerClient
 from ..base.operations import Operations, FuseOSError
 
 
-class RemoteDevice(Operations):
-    def __init__(self, swagger_url, facl):
-        self.http_client = RequestsClient()
-        self.client = SwaggerClient.from_url(swagger_url, http_client=self.http_client)
+class LinuxFSDevice(Operations):
+    def __init__(self, root, users, groups, facl):
+        self.root = root  # 设备根目录
+        self.users = users  # 全局用户与本地用户映射关系
+        self.groups = groups  # 全局用户组与本地用户组映射关系
         self.facl = facl  # 设备访问权限
+
+    def real_path(self, path):
+        return path.join(self.root, path)
 
     def access(self, path, mode, **kwargs):
         return 0

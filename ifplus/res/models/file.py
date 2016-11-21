@@ -297,10 +297,11 @@ class FileTreeNode(BaseFileNode):
 
 
 class FileObject(object):
-    def __init__(self, file_path, underlying=None, filesystem=None):
+    def __init__(self, file_path, underlying=None, filesystem=None, device=None):
         self.file_path = file_path
         self.underlying = underlying
         self.filesystem = filesystem
+        self.device = device
 
     def load(self):
         if self.underlying is None and self.filesystem is not None:

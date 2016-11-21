@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Blueprint
+from flask.ext.pymongo import PyMongo
 from .restful import Rest
 from .res import VFS
 
@@ -7,6 +7,7 @@ from .res import VFS
 class Application(object):
     def __init__(self, app=None, **kwargs):
         self.rest = None
+        self.mongo = None
         self.auth = None
         self.res = None
         self.pm = None
@@ -16,9 +17,8 @@ class Application(object):
 
     def init_app(self, app, **kwargs):
         self.rest = Rest(app, **kwargs)
+        self.mongo = PyMongo(app)
+        setattr(app, 'mongo', self.mongo)
         self.res = VFS(app, **kwargs)
 
-        # 生成蓝图
-        api_blueprint = Blueprint('api', __name__, url_prefix='/api')
-        app.api.init_app(api_blueprint)
-        app.register_blueprint(api_blueprint, **kwargs)
+        self.rest.register()

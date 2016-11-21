@@ -14,6 +14,7 @@ flatdict
 bidict
 bson
 pymongo
+Flask-PyMongo
 watchdog
 socketIO-client
 flask-socketio
