@@ -5,7 +5,7 @@ import ldap
 from ldap.cidict import cidict
 import ldap.modlist as modlist
 import ldap.schema
-from ldap_rbac.core.models import LdapEntity
+from ..models.base import LdapEntity
 
 from .constants import *
 from .schemas import *
