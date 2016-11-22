@@ -2,6 +2,7 @@ flask
 six
 python-ldap
 PyJWT
+msgpack-python
 flask-login
 flask-restplus
 bravado

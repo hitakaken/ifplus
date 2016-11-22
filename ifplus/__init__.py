@@ -29,4 +29,6 @@ class Application(object):
         self.chats = ChatServer(app=app, **kwargs)
 
         self.rest.register()
+        # print '注册 REST API'
         self.chats.register()
+        # print '注册 Socket-IO'
