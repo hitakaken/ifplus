@@ -17,5 +17,8 @@ class VFS(object):
         self.fs = VirtualFileSystem(self.mongo)
         setattr(self.app, 'fs', self.fs)
         self.app.api.add_namespace(ns)
+        from .views.vfs import vfs_bp
+        self.app.register_blueprint(vfs_bp, url_prefix='/raw')
+
 
 

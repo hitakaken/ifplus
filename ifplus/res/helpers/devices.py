@@ -39,9 +39,7 @@ class MongoDevice(Operations):
                 nodes.append(name)
                 parent = None
                 continue
-            paths = underlying.get(u'ancestors', [])
-            paths.append(underlying[u'name'])
-            parent = FileObject(u'/' + u'/'.join(paths), underlying=underlying, filesystem=self.fs)
+            parent = self.create_node(underlying)
             # TODO 检查是否为软链接
             nodes.append(parent)
         return nodes
@@ -49,12 +47,17 @@ class MongoDevice(Operations):
     @staticmethod
     def create_document(name, parent, mode=0o750, mask=S_IFDIR, **kwargs):
         now = datetime.datetime.now()
+        if parent is not None:
+            ancestors = parent.underlying[u'ancestors']
+            ancestors.append(parent.underlying[u'name'])
+        else:
+            ancestors = []
+        print ancestors
         return {
                 u'_id': ObjectId(),
                 u'name': name,
                 u'parent': parent.underlying[u'_id'] if parent is not None else None,
-                u'ancestors': parent.underlying[u'ancestors'] + [parent.underlying[u'name']]
-                if parent is not None else [],
+                u'ancestors': ancestors,
                 u'uid': None,
                 u'creator': None,
                 u'gid': None if 'group' not in kwargs else kwargs.get('group'),
@@ -139,7 +142,7 @@ class MongoDevice(Operations):
                 parent = node
                 continue
             # TODO 检查权限
-            folder_document = self.create_document(node, parent, mode, mask=S_IFDIR, **kwargs)
+            folder_document = self.create_document(node, parent, mode=mode, mask=S_IFDIR, **kwargs)
             self.mongo.db.files.insert(folder_document)
             parent = self.create_node(folder_document)
         return parent
@@ -152,8 +155,9 @@ class MongoDevice(Operations):
         nodes = self.path_nodes(path)
         if type(nodes[-1]) == unicode:
             raise FuseOSError(ENOENT, http_status=404)
-
-        return 0
+        file_node = nodes[-1]
+        resp = self.mongo.send_file(str(file_node.underlying[u'_id']))
+        return resp, file_node
 
     def opendir(self, path, **kwargs):
         nodes = self.path_nodes(path)
@@ -219,7 +223,7 @@ class MongoDevice(Operations):
         if len(nodes) > 1 and type(nodes[-2]) == unicode and ('force' not in kwargs or not kwargs['force']):
             raise FuseOSError(ENOENT, http_status=404)
         parent = None
-        for node in nodes[-1]:
+        for node in nodes[:-1]:
             if type(node) != unicode:
                 # 检查是否为文件夹
                 if not S_ISDIR(node.underlying.get(u'mode')):
@@ -227,22 +231,30 @@ class MongoDevice(Operations):
                 parent = node
                 continue
             # TODO 检查权限
-            folder_document = self.create_document(node, parent, kwargs['mode'], mask=S_IFDIR, **kwargs)
+            folder_document = self.create_document(node, parent,  mask=S_IFDIR, **kwargs)
             self.mongo.db.files.insert(folder_document)
             parent = self.create_node(folder_document)
         if type(nodes[-1]) == unicode:
-            file_document = self.create_document(nodes[-1], parent, kwargs['mode'], mask=S_IFREG, **kwargs)
+            file_document = self.create_document(nodes[-1], parent, mask=S_IFREG, **kwargs)
             file_node = self.create_node(file_document)
         else:
             file_node = nodes[-1]
-        self.mongo.save_file(file_node.name, data)
+        self.mongo.save_file(str(file_node.underlying[u'_id']), data)
+        stored_file = self.mongo.db[u'fs.files'].find_one_or_404({u'filename': str(file_node.underlying[u'_id'])})
+        file_node.underlying[u'size'] = stored_file[u'length']
         if type(nodes[-1]) == unicode:
             self.mongo.db.files.insert(file_node.underlying)
         else:
             now = datetime.datetime.now()
             file_node[u'atime'] = now
             file_node[u'mtime'] = now
-            self.mongo.db.files.update_one({u'_id': file_node[u'_id']}, {u'$set': {u'atime': now, u'mtime': now}})
+            self.mongo.db.files.update_one(
+                {u'_id': file_node[u'_id']},
+                {u'$set': {
+                    u'atime': now,
+                    u'mtime': now,
+                    u'size': file_node.underlying[u'size']
+                }})
         return file_node
 
     def getfacl(self, path, **kwargs):

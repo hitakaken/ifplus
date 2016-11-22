@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
-from flask import current_app as app
+import urllib
+from flask import current_app as app, Blueprint
 from errno import *
 from ifplus.restful.patched import Namespace, Resource
 from ifplus.auth.models.token import UserToken
@@ -110,14 +111,37 @@ class FileAction(Resource):
     @ns.expect(auth_token_model)
     @ns.doc(id='read')
     def get(self, file_path):
+        kwargs = {}
         file_path = normalize_file_path(file_path)
-        return app.fs.open(file_path)
+        resp, file_node = app.fs.open(file_path, None, **kwargs)
+        # return file_node.underlying
+        file_name = urllib.quote(file_node.underlying[u'name'].encode('utf8'))
+        resp.headers['Content-Disposition'] = 'attachment; filename=%s' % file_name
+        return resp
 
     @ns.expect(auth_token_model, upload_model)
     @ns.doc(id='write')
-    def post(self, file_path):
+    @ns.marshal_with(file_meta_model)
+    def put(self, file_path):
         file_path = normalize_file_path(file_path)
-        return {}
+        args = upload_model.parse_args()
+        kwargs = {}
+        mode = args['mod'] if args['mod'] is not None else '750'
+        if mode_pattern.match(mode):
+            mode = int(mode, 8)
+        else:
+            raise FuseOSError(EINVAL, http_status=400)
+        kwargs['mode'] = mode
+        if args['usr'] is not None:
+            kwargs['owner'] = args['usr']
+        if args['grp'] is not None:
+            kwargs['group'] = args['grp']
+        if args['fce'] is not None:
+            kwargs['force'] = args['fce']
+        if args['ovw'] is not None:
+            kwargs['overwrite'] = args['ovw']
+        upload_file = args['file']
+        return app.fs.write(file_path, upload_file, 0, 0, **kwargs).meta().as_dict()
 
     @ns.expect(auth_token_model)
     @ns.doc(id='del')
@@ -177,7 +201,7 @@ class FolderActions(Resource):
             kwargs['overwrite'] = args['ovw']
         upload_file = args['file']
         file_path = normalize_file_path(file_path + '/' + upload_file.filename)
-        return app.fs.write(file_path, upload_file.read(), 0, 0, **kwargs)
+        return app.fs.write(file_path, upload_file, 0, 0, **kwargs).meta().as_dict()
 
     @ns.expect(auth_token_model)
     @ns.doc(id='rmdir')
@@ -216,3 +240,15 @@ class XattrsActions(Resource):
         file_path = normalize_file_path(file_path)
         return {}
 
+vfs_bp = Blueprint('vfs_bp', __name__, url_prefix='/raw')
+
+
+@vfs_bp.route('/file/<path:file_path>')
+def get_raw_file(file_path):
+    kwargs = {}
+    file_path = normalize_file_path(file_path)
+    resp, file_node = app.fs.open(file_path, None, **kwargs)
+    resp.headers['Content-Type'] = 'application/octet-stream'
+    file_name = urllib.quote(file_node.underlying[u'name'].encode('utf8'))
+    resp.headers['Content-Disposition'] = 'attachment; filename=%s' % file_name
+    return resp
