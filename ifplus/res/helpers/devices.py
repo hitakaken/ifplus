@@ -171,9 +171,18 @@ class MongoDevice(Operations):
 
     def readdir(self, path, fh, **kwargs):
         nodes = self.path_nodes(path)
-        if type(nodes[-1]) == unicode:
-            raise FuseOSError(ENOENT, http_status=404)
-        return ['.', '..']
+        if len(nodes) > 1:
+            if type(nodes[-1]) == unicode:
+                raise FuseOSError(ENOENT, http_status=404)
+            if not S_ISDIR(nodes[-1].underlying.get(u'mode')):
+                raise FuseOSError(ENOTDIR, http_status=400)
+        current_node = nodes[-1] if len(nodes) >= 1 else None
+        # TODO 检查权限
+        documents = self.mongo.db.files.find(
+            {u'parent': None if current_node is None else current_node.underlying[u'_id']}
+        ).sort([(u'mode', 1), (u'name', 1)])
+        file_nodes = [self.create_node(document) for document in documents]
+        return file_nodes
 
     def readlink(self, path, **kwargs):
         return FuseOSError(ENOENT)
@@ -198,7 +207,7 @@ class MongoDevice(Operations):
 
     def statfs(self, path, **kwargs):
         nodes = self.path_nodes(path)
-        if type(nodes[-1]) == unicode:
+        if type(nodes[-1]) == unicode or len(nodes) < 1:
             raise FuseOSError(ENOENT, http_status=404)
         return nodes[-1]
 
@@ -258,7 +267,60 @@ class MongoDevice(Operations):
         return file_node
 
     def getfacl(self, path, **kwargs):
-        raise FuseOSError(EOPNOTSUPP)
+        nodes = self.path_nodes(path)
+        if type(nodes[-1]) == unicode or len(nodes) < 1:
+            raise FuseOSError(ENOENT, http_status=404)
+        # TODO 检查权限
+        return nodes[-1].acl()
 
-    def setfacl(self, path, ace, **kwargs):
-        raise FuseOSError(EOPNOTSUPP)
+    def setfacl(self, path, aces, **kwargs):
+        nodes = self.path_nodes(path)
+        if type(nodes[-1]) == unicode or len(nodes) < 1:
+            raise FuseOSError(ENOENT, http_status=404)
+        # TODO 遍历子节点
+        # TODO 检查权限
+        file_node = nodes[-1]
+        # 删除操作
+        new_aces = []
+        if kwargs['action'] == -1:
+            sid_to_delete = []
+            for ace_str in aces:
+                parts = ace_str.split(u':')
+                sid = parts[0] + u':' + parts[1]
+                sid_to_delete.append(sid)
+            for ace in file_node.underlying[u'acl']:
+                if ace[u'sid'] not in sid_to_delete:
+                    new_aces.append(ace)
+        elif kwargs['action'] == 0:
+            for ace_str in aces:
+                parts = ace_str.split(u':')
+                sid = parts[0] + u':' + parts[1]
+                # TODO 检查用户SID是否存在
+                mask = 0x80000000 | int(parts[-1], 16)
+                new_aces.append({u'sid': sid, u'mask': mask})
+        elif kwargs['action'] == 1:
+            sids_to_add = []
+            aces_to_add = {}
+            sids_added = []
+            for ace_str in aces:
+                parts = ace_str.split(u':')
+                sid = parts[0] + u':' + parts[1]
+                sids_to_add.append(sid)
+                # TODO 检查用户SID是否存在
+                mask = 0x80000000 | int(parts[-1], 16)
+                aces_to_add[sid] = mask
+            for ace in file_node.underlying[u'acl']:
+                if ace[u'sid'] not in sids_to_add:
+                    new_aces.append(ace)
+                else:
+                    new_aces.append(aces_to_add[ace[u'sid']])
+                    sids_added.append(ace[u'sid'])
+            for sid in sids_to_add:
+                if sid not in sids_added:
+                    new_aces.append(aces_to_add[sid])
+        self.mongo.db.files.update_one(
+            {u'_id': file_node.underlying[u'_id']},
+            {u'$set': {u'acl': new_aces}}
+        )
+        file_node.underlying[u'acl'] = new_aces
+        return file_node.acl()

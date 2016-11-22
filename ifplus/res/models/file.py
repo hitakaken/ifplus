@@ -98,6 +98,7 @@ class FileMetaInfo(BaseFileNode):
             'change': fields.DateTime(title='最后变更时间', description='上一次文件信息变动的时间', required=True),
             'create': fields.DateTime(description='创建时间'),
             'creator': fields.String(description='创建者'),
+            'perms': fields.String(description='访问者权限'),
         })
 
     def as_dict(self):
@@ -223,14 +224,28 @@ class FileAccessControlList(AccessControlList, BaseFileNode):
         return self.underlying.get('mode')
 
     def aces(self):
-        return self.underlying.get('acl', [])
+        aces = []
+        for ace in self.underlying.get('acl', []):
+            mask = ace[u'mask']
+            aces.append({
+                'sid': ace[u'sid'],
+                'allow': mask << 8 >> 16, 'deny': mask << 16 >> 8, 'grant': mask & 0xFF,
+                'ihb': (mask & 0x01000000) > 0, 'ihd': (mask & 0x02000000) > 0
+            })
+        return aces
 
     def add_or_update(self, sid, allow_mask, deny_mask, grant_mask, inheritable, inherited):
         aces = []
         found = False
-        new_ace = {'sid': sid,
-                   'allow': allow_mask, 'deny': deny_mask, 'grant': grant_mask,
-                   'ihb': inheritable, 'ihd': inherited}
+        mask = 0x80000000
+        mask |= allow_mask << 16
+        mask |= deny_mask << 8
+        mask |= deny_mask << grant_mask
+        if inheritable:
+            mask |= 0x01000000
+        if inherited:
+            mask |= 0x02000000
+        new_ace = {u'sid': sid, u'mask': mask}
         for ace in self.aces():
             if ace.get('sid') == sid:
                 aces.append(new_ace)
@@ -257,6 +272,14 @@ class FileAccessControlList(AccessControlList, BaseFileNode):
             'mode': fields.String(description='文件模式', required=True),
             'acl': fields.List(fields.String, description='ACL条目')
         })
+
+    def as_dict(self):
+        return {
+            'owner': self.owner(),
+            'group': self.group(),
+            'mode': u'%03o' % (0o777 & self.mode()),
+            'acl': [u'%s:%08x' % (ace[u'sid'], ace[u'mask']) for ace in self.underlying[u'acl']]
+        }
 
 
 class FileTreeNode(BaseFileNode):
@@ -340,7 +363,7 @@ class FileObject(object):
         return FileTreeNode(self.underlying, filesystem=self.filesystem)
 
     @classmethod
-    def model(cls, ns, meta_model, content_model, acl_model):
+    def model(cls, ns, meta_model, content_model):
         return ns.model('FileObject', {
             'path': fields.String(description='文件路径', required=True),
             'parent': fields.String(description='父节点', required=True),
@@ -350,5 +373,5 @@ class FileObject(object):
                 'key': fields.String(description='属性名'),
                 'value': fields.String(description='属性值')
             })),
-            'acl': fields.Nested(acl_model),
+            'acl': fields.List(fields.String, description='ACL条目')
         })

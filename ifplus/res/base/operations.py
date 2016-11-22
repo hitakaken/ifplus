@@ -100,10 +100,10 @@ class Operations(object):
     @classmethod
     def mkdir_request_model(cls, ns):
         parser = ns.parser()
-        parser.add_argument('usr', location='args')
-        parser.add_argument('grp', location='args')
-        parser.add_argument('mod', location='args')
-        parser.add_argument('fce', type=bool, location='args')
+        parser.add_argument('usr', location='args', help='指定所有者')
+        parser.add_argument('grp', location='args', help='指定所有组')
+        parser.add_argument('mod', location='args', help='指定权限掩码')
+        parser.add_argument('fce', type=bool, location='args', help='是否创建父节点')
         return parser
 
     @abstractmethod
@@ -183,18 +183,26 @@ class Operations(object):
     @classmethod
     def upload_model(cls, ns):
         parser = ns.parser()
-        parser.add_argument('file', location='files', type=FileStorage, required=True)
-        parser.add_argument('usr', location='args')
-        parser.add_argument('grp', location='args')
-        parser.add_argument('mod', location='args')
-        parser.add_argument('fce', type=bool, location='args')
-        parser.add_argument('ovw', type=bool, location='args')
+        parser.add_argument('file', location='files', type=FileStorage, required=True, help='上传文件')
+        parser.add_argument('usr', location='args', help='指定所有者')
+        parser.add_argument('grp', location='args', help='指定所有组')
+        parser.add_argument('mod', location='args', help='指定权限掩码')
+        parser.add_argument('fce', type=bool, location='args', help='是否创建父节点')
+        parser.add_argument('ovw', type=bool, location='args', help='是否覆盖')
         return parser
 
     @abstractmethod
     def getfacl(self, path, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
 
+    @classmethod
+    def acl_request_model(cls, ns):
+        parser = ns.parser()
+        parser.add_argument('ace', location='args', required=True, action='append',
+                            help='ACL条目，格式：[u|g|r]:<UUID>:[FFFFFFFF]')
+        parser.add_argument('scan', type=bool, location='args', help='是否遍历')
+        return parser
+
     @abstractmethod
-    def setfacl(self, path, ace, **kwargs):
+    def setfacl(self, path, aces, **kwargs):
         raise FuseOSError(EOPNOTSUPP)

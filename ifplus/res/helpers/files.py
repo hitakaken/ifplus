@@ -106,8 +106,8 @@ class VirtualFileSystem(MongoDevice):
     # def read(self, path, size, offset, fh, **kwargs):
     #    return FuseOSError(EIO)
 
-    def readdir(self, path, fh, **kwargs):
-        return ['.', '..']
+    # def readdir(self, path, fh, **kwargs):
+    #    return ['.', '..']
 
     def readlink(self, path, **kwargs):
         return FuseOSError(ENOENT)
@@ -147,9 +147,9 @@ class VirtualFileSystem(MongoDevice):
     # def write(self, path, data, offset, fh, **kwargs):
     #     raise FuseOSError(EROFS)
 
-    def getfacl(self, path, **kwargs):
-        raise FuseOSError(EOPNOTSUPP)
+    # def getfacl(self, path, **kwargs):
+    #    raise FuseOSError(EOPNOTSUPP)
 
-    def setfacl(self, path, ace, **kwargs):
-        raise FuseOSError(EOPNOTSUPP)
+    # def setfacl(self, path, ace, **kwargs):
+    #    raise FuseOSError(EOPNOTSUPP)
 

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 import urllib
-from flask import current_app as app, Blueprint
 from errno import *
+from flask import current_app as app, Blueprint
+from flask_login import current_user
 from ifplus.restful.patched import Namespace, Resource
 from ifplus.auth.models.token import UserToken
 from ..base.operations import Operations, FuseOSError
@@ -35,15 +36,13 @@ file_content_model = FileContent.model(ns)
 file_xattrs_model = FileExtraAttributes.model(ns)
 file_acl_model = FileAccessControlList.model(ns)
 file_node_model = FileTreeNode.model(ns)
-file_object_model = FileObject.model(ns,
-                                     file_meta_model,
-                                     file_content_model,
-                                     file_acl_model,)
+file_object_model = FileObject.model(ns, file_meta_model, file_content_model)
 # 操作请求/响应 Schemas
 fs_action_response_model = Operations.fs_action_response_model(ns)
 access_request_model = Operations.access_request_model(ns)
 mkdir_request_model = Operations.mkdir_request_model(ns)
 upload_model = Operations.upload_model(ns)
+acl_request_model = Operations.acl_request_model(ns)
 # 正则校验表达式 Patterns
 mode_pattern = re.compile('^[0-7]{3}$')
 
@@ -67,7 +66,7 @@ class AccessAction(Resource):
     @ns.marshal_with(fs_action_response_model)
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
-        print file_path
+        kwargs = {'user': current_user, }
         return {}
 
 
@@ -78,6 +77,7 @@ class ChmodAction(Resource):
     @ns.marshal_with(fs_action_response_model)
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
+        kwargs = {'user': current_user, }
         return {}
 
 
@@ -88,6 +88,7 @@ class ChownAction(Resource):
     @ns.marshal_with(fs_action_response_model)
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
+        kwargs = {'user': current_user, }
         return {}
 
 
@@ -95,15 +96,38 @@ class ChownAction(Resource):
 class FaclAction(Resource):
     @ns.expect(auth_token_model)
     @ns.doc(id='getfacl')
+    @ns.marshal_with(file_acl_model)
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
-        return {}
+        kwargs = {'user': current_user}
+        return app.fs.getfacl(file_path, **kwargs).as_dict()
 
-    @ns.expect(auth_token_model)
-    @ns.doc(id='setfacl')
+    @ns.expect(auth_token_model, acl_request_model)
+    @ns.doc(id='addfacl')
+    @ns.marshal_with(file_acl_model)
     def post(self, file_path):
         file_path = normalize_file_path(file_path)
-        return {}
+        args = acl_request_model.parse_args()
+        kwags = {'user': current_user, 'action': 1, 'scan': args['scan'] is not None and args['scan']}
+        return app.fs.setfacl(file_path, args[u'ace'], **kwags).as_dict()
+
+    @ns.expect(auth_token_model, acl_request_model)
+    @ns.doc(id='setfacl')
+    @ns.marshal_with(file_acl_model)
+    def put(self, file_path):
+        file_path = normalize_file_path(file_path)
+        args = acl_request_model.parse_args()
+        kwags = {'user': current_user, 'action': 0, 'scan': args['scan'] is not None and args['scan']}
+        return app.fs.setfacl(file_path, args[u'ace'], **kwags).as_dict()
+
+    @ns.expect(auth_token_model, acl_request_model)
+    @ns.doc(id='delfacl')
+    @ns.marshal_with(file_acl_model)
+    def delete(self, file_path):
+        file_path = normalize_file_path(file_path)
+        args = acl_request_model.parse_args()
+        kwags = {'user': current_user, 'action': -1, 'scan': args['scan'] is not None and args['scan']}
+        return app.fs.setfacl(file_path, args[u'ace'], **kwags).as_dict()
 
 
 @ns.route('/file/<path:file_path>')
@@ -111,7 +135,7 @@ class FileAction(Resource):
     @ns.expect(auth_token_model)
     @ns.doc(id='read')
     def get(self, file_path):
-        kwargs = {}
+        kwargs = {'user': current_user, }
         file_path = normalize_file_path(file_path)
         resp, file_node = app.fs.open(file_path, None, **kwargs)
         # return file_node.underlying
@@ -125,7 +149,7 @@ class FileAction(Resource):
     def put(self, file_path):
         file_path = normalize_file_path(file_path)
         args = upload_model.parse_args()
-        kwargs = {}
+        kwargs = {'user': current_user, }
         mode = args['mod'] if args['mod'] is not None else '750'
         if mode_pattern.match(mode):
             mode = int(mode, 8)
@@ -147,6 +171,7 @@ class FileAction(Resource):
     @ns.doc(id='del')
     def delete(self, file_path):
         file_path = normalize_file_path(file_path)
+        kwargs = {'user': current_user, }
         return {}
 
 
@@ -154,9 +179,12 @@ class FileAction(Resource):
 class FolderActions(Resource):
     @ns.expect(auth_token_model)
     @ns.doc(id='ls')
+    @ns.marshal_list_with(file_meta_model)
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
-        return {}
+        kwargs = {'user': current_user, }
+        file_nodes = app.fs.readdir(file_path, 0, **kwargs)
+        return [file_node.meta().as_dict() for file_node in file_nodes]
 
     @ns.expect(auth_token_model, mkdir_request_model)
     @ns.doc(id='mkdir')
@@ -164,7 +192,7 @@ class FolderActions(Resource):
     def put(self, file_path):
         file_path = normalize_file_path(file_path)
         args = mkdir_request_model.parse_args()
-        kwargs = {}
+        kwargs = {'user': current_user, }
         mode = args['mod'] if args['mod'] is not None else '750'
         if mode_pattern.match(mode):
             mode = int(mode, 8)
@@ -184,7 +212,7 @@ class FolderActions(Resource):
     @ns.marshal_with(file_meta_model)
     def post(self, file_path):
         args = upload_model.parse_args()
-        kwargs = {}
+        kwargs = {'user': current_user, }
         mode = args['mod'] if args['mod'] is not None else '750'
         if mode_pattern.match(mode):
             mode = int(mode, 8)
@@ -210,6 +238,17 @@ class FolderActions(Resource):
         return {}
 
 
+@ns.route('/move/<path:file_path>')
+class MoveAction(Resource):
+    @ns.expect(auth_token_model)
+    @ns.doc(id='move')
+    @ns.marshal_with(file_meta_model)
+    def get(self, file_path):
+        file_path = normalize_file_path(file_path)
+        kwargs = {'user': current_user, }
+        return app.fs.statfs(file_path, **kwargs).meta().as_dict()
+
+
 @ns.route('/stat/<path:file_path>')
 class StatfsAction(Resource):
     @ns.expect(auth_token_model)
@@ -217,7 +256,7 @@ class StatfsAction(Resource):
     @ns.marshal_with(file_meta_model)
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
-        kwargs = {}
+        kwargs = {'user': current_user, }
         return app.fs.statfs(file_path, **kwargs).meta().as_dict()
 
 
@@ -227,17 +266,20 @@ class XattrsActions(Resource):
     @ns.doc(id='getxattr')
     def get(self, file_path):
         file_path = normalize_file_path(file_path)
+        kwargs = {'user': current_user, }
         return {}
 
     @ns.expect(auth_token_model)
     @ns.doc(id='setxattr')
     def post(self, file_path):
         file_path = normalize_file_path(file_path)
+        kwargs = {'user': current_user, }
         return {}
 
     @ns.doc(id='removexattr')
     def delete(self, file_path):
         file_path = normalize_file_path(file_path)
+        kwargs = {'user': current_user, }
         return {}
 
 vfs_bp = Blueprint('vfs_bp', __name__, url_prefix='/raw')
@@ -245,7 +287,7 @@ vfs_bp = Blueprint('vfs_bp', __name__, url_prefix='/raw')
 
 @vfs_bp.route('/file/<path:file_path>')
 def get_raw_file(file_path):
-    kwargs = {}
+    kwargs = {'user': current_user, }
     file_path = normalize_file_path(file_path)
     resp, file_node = app.fs.open(file_path, None, **kwargs)
     resp.headers['Content-Type'] = 'application/octet-stream'
