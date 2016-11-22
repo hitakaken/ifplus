@@ -7,9 +7,6 @@ class ChatRoom(FileObject):
         super(ChatRoom, self).__init__(room_path, **kwargs)
         self.props = None
 
-    def load(self):
-        self.props = self.underlying[u'room']
-
     @property
     def is_private(self):
         return self.props[u'private']
