@@ -1,0 +1,113 @@
+definitions:
+  FileObject:
+    title: 文件对象
+    description: 存储在MongoDB.files集合中，参考Linux INode、ACL权限控制、XAttrs扩展属性、树结构(Parent)模式实现
+    type: object
+    properties:
+      _id:
+        type: ObjectID
+        title: 唯一标识
+        description: 文件对象全局唯一标识，采用Mongo ObjectID进行索引, 导出时使用```fid```字段
+      name:
+        type: string
+        title: 文件名
+        description: 文件名，与```ancestors```字段可组成文件路径
+      ancestors:
+        type: array
+        title: 祖先节点名
+        description: 祖先节点名数组，与```name```字段可组成文件路径
+        items:
+          type: string
+      parent:
+        type: ObjectID
+        title: 父节点
+        description: 父节点，由父节点的```_id```字段指定，当父节点为根节点时为 null
+      uid:
+        type: string
+        title: 所有者SID
+        description: 文件对象所有者的SID，SID由用户对象类型和用户对象ID组合而成，形如[u|g|r]:<UUID>，null代表nobody
+      gid:
+        type: string
+        title: 所有组SID
+        description: 文件对象所有组的SID，SID由用户对象类型和用户对象ID组合而成，形如[u|g|r]:<UUID>，null代表nogroup
+      mode:
+        type: number
+        format: int32
+        type: 权限掩码
+        description: 由占位码 0x80000000 | 八进制权限掩码 0o177777 组成,
+        前2位八进制码代表文件类型，04代表文件夹，10代表文件
+        后3位八进制码分别代表owner, group, other的权限，八进制码每位bit分别代表read、write、excute权限
+        在检索时采用mongo的 $bitAllSet 方法加速检索
+      creator:
+        type: string
+        title: 创建者SID
+        description: 文件对象创建者的SID，SID由用户对象类型和用户对象ID组合而成，形如[u|g|r]:<UUID>，null代表nobody
+      create:
+        type: DateTime
+        title: 创建时间
+        description: 文件创建时间，Linux系统无此时间
+      atime:
+        type: DateTime
+        title: 最后访问时间
+        description: 文件最后访问时间
+      mtime:
+        type: DateTime
+        title: 最后修改时间
+        description: 文件内容最后修改时间
+      ctime:
+        type: DateTime
+        title: 最后变更时间
+        description: 文件对象属性最后变更时间，Windows无此时间
+      nlink:
+        type: integer
+        title: 硬链接数
+        description: 文件对象的硬连接数量，暂时未启用
+      dev:
+        type: string
+        title: 设备ID
+        description: 文件对象所在设备ID，null表示使用主Mongo数据库存储文件所有内容
+      size:
+        type: integer
+        title: 文件大小
+        description: 文件内容大小，文件夹、软连接始终为0
+      acl:
+        type: array
+        title: ACL权限
+        description: ACL权限控制条目列表
+        items:
+          type: object
+          properties:
+            sid:
+              type: string
+              title: ACL条目用户SID
+              description: ACL条目用户SID，SID由用户对象类型和用户对象ID组合而成，形如[u|g|r]:<UUID>，不能为空
+              允许与owner和group对象拥有相同SID，作为mode权限补充
+            mask:
+              type: integer
+              title: 权限掩码
+              description: 由占位码 0x80000000 | 16进制权限掩码 0x[03][FF][FF][FF] 组成，
+              前2位16进制码中 01 该条目可被继承， 02 该条目为继承的条目
+              后6位16进制吗中每8个bit为一组，分别代表 allow(被允许的)、deny(被拒绝的)、grant(可授权的权限)
+              8位bit分别代表 读、写、执行、删(特殊)、变更ACL、变更、扩展属性、点赞/标签/评论 8个权限
+      xattrs:
+        type: object
+        title: 扩展属性
+        description: 文件对象的扩展属性，第一层为命名空间，建议采用RDF规则表述，未来可扩充
+        additionalProperties: true
+        properties:
+          user:
+            type: object
+            description: 用户自定义扩展属性的命名空间，参考Linux XAttrs
+          system:
+            type: object
+            description: 系统自定义扩展属性的命名空间，参考Linux XAttrs
+          dc:
+            type: object
+            description: Dublin Core命名空间
+          fifo:
+            type: object
+            description: FIFO 命名空间
+
+
+
+
