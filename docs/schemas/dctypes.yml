@@ -1,0 +1,139 @@
+definitions:
+  DCMIBox:
+    type: object
+    title: DCMI Box
+    description: DCMI Box表示一个地理区域范围。
+  DCMIType:
+    type: string
+    title: DCMI Type Vocabulary
+    description: 用来对资源内容的属性和种类进行分类的的类型列表。
+  DDC:
+    type: string
+    title: DDC
+    description: 杜威十进分类法。参见：http://www.oclc.org/dewey
+  IMT:
+    type: string
+    title: IMT
+    description: 资源的互联网媒体类型。参见：http://www.iana.org/assignments/media-types/
+  ISO3166:
+    type: string
+    title: ISO 3166
+    description: ISO 3166代码表示国家名称。参见：http://www.iso.org/iso/en/prods-services/iso3166ma/02iso-3166-code-lists/list-en1.html
+  ISO639-2:
+    type: string
+    title: ISO 639-2
+    description: ISO 639-2：语言名称的表示代码。参见：http://lcweb.loc.gov/standards/iso639-2/langhome.html
+  LCC:
+    type: string
+    title: LCC
+    description: 美国国会图书馆分类法
+  LCSH:
+    type: string
+    title: LCSH
+    description: 美国国会图书馆标题表
+  MESH:
+    type: string
+    title: MeSH
+    description: 医学主题词表。参见：http://www.nlm.nih.gov/mesh/meshhome.html
+  NLM:
+    type: string
+    title: NLM
+    description: 美国国家医学图书馆分类法。参见：http://wwwcf.nlm.nih.gov/class/
+  DCMIPeriod:
+    type: object
+    title: 时间区间
+    description: 对时间区间表示的规定。参见：http://dublincore.org/documents/dcmi-period/
+  DCMIPoint:
+    type: object
+    title: DCMI Point
+    description: DCMI Point利用地理坐标来识别空间中的一个点。
+  RFC1766:
+    type: string
+    title: RFC1766 语言标签
+    description: |
+      互联网RFC 1766 “表示语言的标签”明确规定：
+      用取自ISO639的两个字母代码后跟取自ISO 3166的两个字母的国家代码(可选)来代表语言。
+  RFC3066:
+    type: string
+    title: RFC3066 语言标签
+    description: |
+      互联网RFC 3066即“语言表示的标签”，这个标签前半部分由选自ISO 639-1的两个字母或取自ISO639-2的三个字母组成，
+      后半部分（可选）为取自ISO 3166的两个字母的国家代码或是到IANA注册的三字母以上的代码。
+      ISO 639中的语言代码，如有两个和三个字母的代码，则选两个字母的代码，当只有三个字母的代码时选取三个字母的代码。
+  TGN:
+    type: string
+    title: TGN
+    description: Getty地理名称叙词表
+  UDC:
+    type: string
+    title: UDC
+    description: 国际十进分类法。参见：http://www.udcc.org/
+  URI:
+    type: string
+    title: URI
+    description: URI即统一资源标识符。参见：http://www.ietf.org/rfc/rfc2396.txt
+  W3CDTF:
+    type: string
+    title: W3C-DTF
+    description: W3C对日期和时间的编码规则－基于ISO 8601的一个应用。参见：http://www.w3.org/TR/NOTE-datetime
+  Collection:
+    title: 资源集合
+    description: 资源的集合。作为整体来描述资源集合；其组成部分也可以分别描述
+  Dataset:
+    title: 数据集
+    description: 以一定的格式编码的数据。例子包括列表，表格和数据库。数据集可直接用于计算机进行处理。
+  Event:
+    title: 事件
+    description: |
+      非持久的，基于时间的偶然事件。
+      事件元数据提供描述性信息，这些描述性信息是了解事件的目标、地点、时间和事件相关的责任实体等内容的基础。
+      事件的实例包括：展览会、视频网络播放、国际会议、小组会议、节庆、演出、战争、审判、婚礼、茶话会、突发事件如火灾等。
+  Image:
+    title: 图像
+    description: |
+      除了文本以外其他的可视化的表现方式。
+      例子包括物理实体的图画或照片、绘画、印记、素描、其他图像和图形、动画和活动图像、电影、图表、地图、乐谱等。
+      值得注意的是图像可以包括电子的和物理的两种表现形式。
+  InteractiveResource:
+    title: 交互资源
+    description: |
+      交互资源是一种需要用户的交互才能理解、运行和体验的资源。
+      例子包括web页面上的表单、java应用小程序、多媒体学习对象、聊天服务、虚拟现实环境等。
+  MovingImage:
+    title: 动态图像
+    description: |
+      一系列的视觉表达连续呈现，给人一种移动的感觉。
+      动态图像的实例包括动画、电影、电视节目、录像、活动幻境及模拟过程的视觉输出。
+      动态图像类型的实例必须也是其上位词“图像”的实例。
+  PhysicalObject:
+    title: 物理对象
+    description: |
+      物理对象是指一种没有生命的、三维的对象或物质。
+      需要注意的是这些对象的数字表现或摹本应该用图像、文本或其它类型中的某一种来标识。
+  Service:
+    title: 服务
+    description: |
+      服务是提供一种或多种功能的系统。
+      例子包括影印服务、银行服务、认证服务、馆际互借、Z39.50或者web服务器。
+  Software:
+    title: 软件
+    description: |
+      软件是一种以源代码或编译过的形式存在的计算机程序。
+      例子包括C源文件，微软Windows的exe可执行文件或者Perl脚本。
+  Sound:
+    title: 声音
+    description: |
+      是指主要用于听的一种资源。
+      例子包括音乐回放文件格式 ，音频光盘和被录制的演讲或声音。
+  StillImage:
+    title: 静态图像
+    description: |
+      一种静态的视觉表达。
+      静态图像包括绘画、素描、设计的图案、图样及地图等等。最佳操作推荐对于图像化的文本资料，建议把类型指定为文本。
+      静态图像类型的实例必须也是其上位词“图像”的实例。
+  Text:
+    title: 文本
+    description: |
+      主要通过文字来表达内容的资源，供人阅读用。
+      例子包括图书、信件、论文、诗歌、报纸、文章、邮件列表的文档等等。需要注意的是文本的摹本或图像也是属于文本类型。
+

@@ -1,0 +1,304 @@
+definitions:
+  dc_element:
+    type: object
+    title: 都柏林核心元数据元素集命名空间
+    description: 参考： http://dc.library.sh.cn/dcmi-terms.htm 第二部分：DC元数据元素集
+    properties:
+      contributor:
+        $ref: #/definitions/StringArray
+        title: 其他责任者
+        description:  |
+          对资源的内容做出贡献的其他实体。
+          其他责任者的实例可包括个人、组织或某项服务。一般而言，用其他责任者的名称来标识这一条目。
+      coverage:
+        $ref: #/definitions/StringArray
+        title: 覆盖范围
+        description:  |
+          资源内容所涉及的外延或范围。
+          覆盖范围一般包括空间位置（一个地名或地理坐标）、时间区间（一个时间标识、日期或一个日期范围）
+          或者行政辖区的范围（比如指定的一个行政实体）。推荐覆盖范围最好是取自于一个受控词表
+          （例如地理名称叙词表[TGN]），并应尽可能地使用由数字表示的坐标或日期区间来描述地名与时间段 。
+      creator:
+        type: string
+        title: 创建者
+        description:  |
+          创建资源内容的主要责任者。
+          创建者的实例包括个人、组织或某项服务。一般而言，用创建者的名称来标识这一条目。
+      date:
+        type: string
+        format: date
+        title: 日期
+        description:  |
+          与资源生命周期中的一个事件相关的时间。
+          一般而言，日期应与资源的创建或可获得的日期相关。
+          建议采用的日期格式应符合ISO 8601 [W3CDTF]规范，并使用YYYY-MM-DD的格式。
+      description:
+        type: array
+        items:
+          $ref: #/definitions/MultilingualText
+        title: 描述
+        description: |
+          资源内容的解释。
+          描述可以包括但不限于以下内容：文摘、目录、图像的文字说明、或者一个关于资源内容的文本描述。
+      format:
+        $ref: #/definitions/StringArray
+        title: 格式
+        description: |
+          资源的物理或数字表现形式。
+          一般而言，格式可以包括资源的媒体类型或资源的大小，格式元素可以用来决定展示或操作资源所需的软硬件
+          或其他相应设备。例如资源的大小包括资源所占的存储空间或持续时间。建议采用来自于受控词表中的值
+          （例如Internet媒体类型[MIME]定义的计算机媒体格式）。
+          参考：[MIME] http://www.iana.org/assignments/media-types/
+      identifier:
+        type: string
+        title: 标识符
+        description: |
+          在特定的范围内给予资源的一个明确的标识。
+          建议对资源的标识采用符合某一正式标识体系的字符串及数字组合。正式的标识体系的实例包括统一资源标识符(URI)
+          (包括统一资源定位符URL)、数字对象标识符 (DOI)和国际标准书号 (ISBN)等。
+      language:
+        type: array
+        items:
+          $ref: #/definitions/language
+        title: 语种
+        description: |
+          描述资源知识内容的语种。
+          建议本元素的值采用RFC 3066[RFC3066]，该标准与ISO 639 [ISO639]一起定义了由两个或三个英文字母组成的主标签
+          和可选的子标签来标识语种。例如用“en”或“eng”来表示English,“akk”来表示Akkadian,“en-GB”表示英国英语。
+      publisher:
+        $ref: #/definitions/StringArray
+        title: 出版者
+        description: |
+          使资源成为可获得的责任实体。
+          出版者的实例包括个体、组织或服务。一般而言，应该用出版者的名称来标识这一条目。
+      relation:
+        type: array
+        title: 关联
+        description: |
+          对相关资源的参照。
+          建议最好使用符合规范标识体系的字符串或数字来标识所要参照的资源。
+      rights:
+        type: array
+        title: 权限
+        description: |
+          有关资源本身所有的或被赋予的权限信息。
+          一般而言，权限元素应包括一个对资源的权限声明，或者是对提供这一信息的服务的参照。
+          权限一般包括知识产权(IPR)、版权或其它各种各样的产权 。如果没有权限元素的标注，
+          不可以对与资源相关的上述或其他权利的情况作出任何假定。
+      source:
+        $ref: #/definitions/StringArray
+        title: 来源
+        description: |
+          对当前资源来源的参照。
+          当前资源可能部分或全部源自来源元素所标识的资源，建议对这一资源的标识采用
+          一个符合规范标识系统的字串或数字组合 。
+      subject:
+        $ref: #/definitions/StringArray
+        title: 主题
+        description: |
+          资源内容的主题描述。
+          如果要描述特定资源的某一主题，一般采用关键词、关键词短语或分类号，最好从受控词表或规范的分类体系中取值。
+      title:
+        type: array
+        items:
+          $ref: #/definitions/MultilingualText
+        title: 题名
+        description: |
+          赋予资源的名称。
+          一般而言，指资源对象正式公开的名称。
+      type:
+        $ref: #/definitions/StringArray
+        title: 类型
+        description: |
+          资源内容的特征或类型。
+          资源类型包括描述资源内容的一般范畴、功能、种属或聚类层次的术语。建议采用来自于受控词表中的值
+          （例如DCMI类型词汇表[DCMITYPE]）。要描述资源的物理或数字化表现形式，请使用“格式（FORMAT）”元素 。
+          参考： [DCMITYPE] http://dublincore.org/documents/dcmi-type-vocabulary/
+  dcterms:
+    type: object
+    title: 都柏林核心元数据其他元素和元素限定
+    description: 参考： http://dc.library.sh.cn/dcmi-terms.htm 第三部分：其他元素和元素限定
+    properties:
+      abstract:
+        type: array
+        items:
+          $ref: #/definitions/MultilingualText
+        title: 摘要
+        description: 资源内容的概要。
+      accessRights:
+        $ref: #/definitions/StringArray
+        title: 访问权限
+        description: |
+          关于谁能访问资源的信息，或者是对资源密级状态的说明。
+          访问权限包括基于隐私、安全或其它规则才能对资源进行访问的信息。
+      accrualMethod:
+        type: string
+        title: 更新方法
+        description: 对象被添加到资源集合的方法。最佳操作推荐使用来自控制词表的值。
+      accrualPeriodicity:
+        type: string
+        title: 更新周期
+        description: 对象被添加到资源集合的频率。最佳操作推荐使用来自控制词表的值。
+      accrualPolicy:
+        type: string
+        title: 更新策略
+        description: 向资源集合中添加对象的政策管理。最佳操作推荐使用来自控制词表的值。
+      alternative:
+        type: array
+        items:
+          $ref: #/definitions/MultilingualText
+        title: 替代标题
+        description: 任何可替代正式题名的其它名称。可以包括缩写的资源名称和翻译的资源名称。
+      audience:
+        $ref: #/definitions/StringArray
+        title: 适用对象
+        description: 利用资源的实体类。适用对象可由作者、出版者或第三方确定。
+      available:
+        title: 可获得日期
+        description: 资源将在这段时间内可以获得或曾经可以获得（通常是一个时间区间）。
+      bibliographicCitation:
+        type: array
+        title: 文献引用
+        description: |
+          对资源以参考文献的形式加以引用。
+          不论引文的格式是否标准，都建议尽可能地包括足够的书目细节以使对资源的标识更为清晰、不至于引起混淆。
+      conformsTo:
+        $ref: #/definitions/StringArray
+        title: 遵循
+        description: 对资源所遵循的已有标准的参照。
+      created:
+        type: string
+        format: date
+        title: 创建日期
+        description: 资源创建的日期。
+      dateAccepted:
+        type: string
+        format: date
+        title: 接受日期
+        description: 接受资源的日期（例如大学院系收到的论文，期刊收到的文章等）。
+      dateCopyrighted:
+        type: string
+        format: date
+        title: 版权日期
+        description: 版权声明的日期。
+      dateSubmitted:
+        type: string
+        formate: date
+        title: 递交日期
+        descriptoin: 资源（文章和论文等）资源的递交日期。
+      educationLevel:
+        type: string
+        title: 适用对象的教育水平
+        description: 对教育或培训背景的描述。或资源的适用对象在接受了教育或培训之后所能取得的教育程度的详细说明。
+      extent:
+        type: number
+        title: 大小
+        description: 资源的大小或持续时间。
+      hasFormat:
+        $ref: #/definitions/StringArray
+        title: 格式转换为
+        description: 所描述的资源在被参照的资源之前出现，参照资源在实质上与所描述资源有着相同的知识内容，只是格式不同。
+      hasPart:
+        $ref: #/definitions/StringArray
+        title: 部分为
+        description: 所描述的资源在物理或逻辑上包含被参照的资源 。
+      hasVersion:
+        $ref: #/definitions/StringArray
+        title: 版本关联
+        description: 所描述的资源有译本、修改本或改编本等等，也就是被参照的资源。
+      instructionalMethod:
+        type: string
+        title: 指导方法
+        description: |
+          用于生成知识，意见和技巧的处理方法，资源用来支持此处理方法。
+          指导方法一般将会包括表现指导资料的方法，或者引导指导性行为的方法，还有学习者到学习者，
+          学习者到教师的指导模式，还有衡量团体和个人学习水平的机制。指导方法包括指导和学习过程的所有方面，
+          这些指导和学习过程通过评估和反馈进行计划的规划和执行。
+      isFormatOf:
+        $ref: #/definitions/StringArray
+        title: 格式转换于
+        description: 所描述的资源与被参照的资源有相同的知识内容，但用另一种格式表现出来。
+      isPartOf:
+        $ref: #/definitions/StringArray
+        title: 部分于
+        description: 所描述的资源是被参照资源物理或逻辑上的一个组成部分。
+      isReferencedBy:
+        $ref: #/definitions/StringArray
+        title: 被参照
+        description: 被参照的资源，参考、引用或以另外的方式指引所描述的资源 。
+      isReplacedBy:
+        $ref: #/definitions/StringArray
+        title: 被替代
+        description: 所描述的资源已被参照的资源所代替、替换或取代。
+      isRequiredBy:
+        $ref: #/definitions/StringArray
+        title: 被需求
+        description: 所描述的资源对于被参照资源而言或者在逻辑上、或者在物理上是必不可少的。
+      issued:
+        type: string
+        format: date
+        title: 发布日期
+        description: 资源正式发布（例如出版）的日期。
+      isVersionOf:
+        $ref: #/definitions/StringArray
+        title: 版本继承
+        description: 所描述的资源是被参照资源的译本、修订本或改编本。版本的变化意味着是内容而不是格式有了实质的改变。
+      license:
+        $ref: #/definitions/StringArray
+        title: 许可
+        description: |
+          允许对资源进行操作的官方法律文件。
+          最佳操作推荐使用URI来确定此许可。此类许可的一些例子可以在http://creativecommons.org/licenses/找找到。
+      mediator:
+        $ref: #/definitions/StringArray
+        title: 中介
+        description: |
+          介于资源和其需要者之间的一类实体，帮助资源需求者访问资源。
+          资源的适用对象主要有两类：(1)资源的最终用户；(2)也常常指为访问资源提供中介作用的实体。
+          该元素限定指第二类适用对象。
+      medium:
+        $ref: #/definitions/StringArray
+        title: 媒体
+        description: 资源的物质载体或组成材料。
+      modified:
+        type: string
+        format: date
+        title: 修改日期
+        description: 资源被修改的日期。
+      provenance:
+        $ref: #/definitions/StringArray
+        title: 保管历史
+        description: 资源集合的所有权和保管方面的任何变更的陈述，这对资源集合的真实性，完整性和解释都是非常重要的。
+      references:
+        $ref: #/definitions/StringArray
+        title: 参照
+        description: 所描述的资源参考、引用或以其它方式指引了被参照资源。
+      replaces:
+        $ref: #/definitions/StringArray
+        title: 替代
+        description: 所描述的资源代替、替换或取代了被参照的资源。
+      requires:
+        $ref: #/definitions/StringArray
+        title: 需求
+        description: 所描述的资源需要被参照资源支持其功能、传递或在内容上保持一致。
+      rightsHolder:
+        $ref: #/definitions/StringArray
+        title: 权利持有者
+        description: 对资源拥有所有权或者管理权的个人或组织。最佳操作推荐使用URI或者权利持有者的名称来表示实体。
+      spatial:
+        type: array
+        title: 空间
+        description: 所描述资源知识内容的空间特征。
+      tableOfContents:
+        type: array
+        title: 目录
+        description: 资源内容的子单元列表。
+      temporal:
+        type: string
+        title: 时间
+        description: 所描述资源知识内容的时间特征。
+      valid:
+        type: string
+        format: date
+        title: 生效日期
+        description: 资源生效日期（通常是一个时间区间）。

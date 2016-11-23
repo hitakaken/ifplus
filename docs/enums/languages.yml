@@ -1,0 +1,8 @@
+definitions:
+  language:
+    type: string
+    title: 语种
+    enum:
+      - unknown
+      - zh_cn
+

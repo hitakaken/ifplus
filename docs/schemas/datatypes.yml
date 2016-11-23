@@ -1,0 +1,32 @@
+definitions:
+  MultilingualText:
+    type: object
+    title: 多语言文本
+    description: 多语言文本，包含文本内容信息和语种信息
+    properties:
+      language:
+        $ref: #/definitions/language
+        title: 语种
+        description: |
+          描述文本的语种。
+          建议本属性值采用RFC 3066[RFC3066]，该标准与ISO 639 [ISO639]一起定义了由两个或三个英文字母组成的主标签
+          和可选的子标签来标识语种。例如用“en”或“eng”来表示English,“akk”来表示Akkadian,“en-GB”表示英国英语。
+          该值可为空，表示文本原始内容或语种未识别
+      format:
+        type: string
+        enum: ["text", "html", "markdown"]
+        title: 格式
+        description: |
+          描述文本的格式。
+          文本可以为纯文本、富文本(HTML)、Markdown，后期可增加
+      text:
+        type: string
+        title: 文本内容
+        description: 文本具体内容。
+    required: ["text"]
+  StringArray:
+    type: array
+    items:
+      type: string
+    title: 字符串数组
+

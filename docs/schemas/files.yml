@@ -3,6 +3,7 @@ definitions:
     title: 文件对象
     description: 存储在MongoDB.files集合中，参考Linux INode、ACL权限控制、XAttrs扩展属性、树结构(Parent)模式实现
     type: object
+    required: ["_id", "name", "parent", "uid", "gid", "mode", "create", "atime", "ctime", "mtime", "dev", "nlink", "dev", "size"]
     properties:
       _id:
         type: ObjectID
@@ -60,8 +61,8 @@ definitions:
         description: 文件对象属性最后变更时间，Windows无此时间
       nlink:
         type: integer
-        title: 硬链接数
-        description: 文件对象的硬连接数量，暂时未启用
+        title: 链接数
+        description: 文件对象的链接数，即有多少(虚拟的)文件路径指向这个文件对象
       dev:
         type: string
         title: 设备ID
@@ -69,7 +70,7 @@ definitions:
       size:
         type: integer
         title: 文件大小
-        description: 文件内容大小，文件夹、软连接始终为0
+        description: 文件内容大小，文件夹、软连接始终为0，正常文件为文件的字节数
       acl:
         type: array
         title: ACL权限
@@ -92,21 +93,22 @@ definitions:
       xattrs:
         type: object
         title: 扩展属性
-        description: 文件对象的扩展属性，第一层为命名空间，建议采用RDF规则表述，未来可扩充
-        additionalProperties: true
+        description: 文件对象的扩展属性，第一层为命名空间，建议采用RDF规则表述，未知命名空间数据分表存储
         properties:
           user:
             type: object
-            description: 用户自定义扩展属性的命名空间，参考Linux XAttrs
+            description: 用户自定义扩展属性的命名空间，参考Linux XAttrs，操作权限直接由文件权限约束
+            additionalProperties: true
           system:
             type: object
-            description: 系统自定义扩展属性的命名空间，参考Linux XAttrs
+            description: 系统自定义扩展属性的命名空间，参考Linux XAttrs，仅超级管理员可写
+            additionalProperties: true
           dc:
-            type: object
-            description: Dublin Core命名空间
-          fifo:
-            type: object
-            description: FIFO 命名空间
+            $ref: #/definitions/dc_element
+          dcterms:
+            $ref: #/definitions/dcterms
+
+
 
 
 

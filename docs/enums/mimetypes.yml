@@ -1,0 +1,4 @@
+definitions:
+  mimetype:
+    type: string
+    title: 格式
