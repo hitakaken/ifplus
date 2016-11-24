@@ -11,8 +11,8 @@ LDAP = {
     'OPTIONS': {
         'REQUIRE_CERT': True,
         # 'CACERTFILE': '/root/server.pem',
-        # 'CACERTFILE': 'D:/Tools/ldap/OpenLDAP/secure/certs/server.pem',
-        'CACERTFILE': 'D:/Tools/apacheds/server.pem',
+        'CACERTFILE': 'D:/Tools/ldap/OpenLDAP/secure/certs/server.pem',
+        # 'CACERTFILE': 'D:/Tools/apacheds/server.pem',
         # 'DEBUG_LEVEL': 0
     },
     'START_TLS': True,
