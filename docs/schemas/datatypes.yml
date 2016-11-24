@@ -29,4 +29,23 @@ definitions:
     items:
       type: string
     title: 字符串数组
+  Pageable:
+    type: object
+    title: 分页信息
+    properties:
+      page:
+        type: integer
+        title: 当前页码
+        default: 1
+      size:
+        type: integer
+        title: 页面记录数
+        default: 10
+      sort:
+        $ref: #/definitions/StringArray
+        title: 排序方式
+        description: |
+          排序方式形如：["field1", "~field2", "field3"]，表示以field1升序、field2降序、field3升序进行排序
+
+
 
