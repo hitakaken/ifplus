@@ -1,8 +1,10 @@
 definitions:
   FileObject:
-    title: 文件对象
-    description: 存储在MongoDB.files集合中，参考Linux INode、ACL权限控制、XAttrs扩展属性、树结构(Parent)模式实现
     type: object
+    title: 文件对象
+    description: |
+      文件对象元信息，存储在MongoDB.files集合中
+      参考Linux INode、ACL权限控制、XAttrs扩展属性、树结构(Parent)模式实现
     required: ["_id", "name", "parent", "uid", "gid", "mode", "create", "atime", "ctime", "mtime", "dev", "nlink", "dev", "size"]
     properties:
       _id:
@@ -70,7 +72,7 @@ definitions:
       size:
         type: integer
         title: 文件大小
-        description: 文件内容大小，文件夹、软连接始终为0，正常文件为文件的字节数
+        description: 文件内容大小，文件夹、软链接始终为0，正常文件为文件的字节数或包含对象数
       acl:
         type: array
         title: ACL权限
@@ -91,22 +93,94 @@ definitions:
               后6位16进制吗中每8个bit为一组，分别代表 allow(被允许的)、deny(被拒绝的)、grant(可授权的权限)
               8位bit分别代表 读、写、执行、删(特殊)、变更ACL、变更、扩展属性、点赞/标签/评论 8个权限
       xattrs:
-        type: object
+        $ref: #/definitions/FileAttributes
         title: 扩展属性
         description: 文件对象的扩展属性，第一层为命名空间，建议采用RDF规则表述，未知命名空间数据分表存储
+      content:
+        type: object
+        title: 文件内容
+        description: |
+          定义了文件内容的存储方式、内容类型、读写位置
         properties:
-          user:
-            type: object
-            description: 用户自定义扩展属性的命名空间，参考Linux XAttrs，操作权限直接由文件权限约束
-            additionalProperties: true
-          system:
-            type: object
-            description: 系统自定义扩展属性的命名空间，参考Linux XAttrs，仅超级管理员可写
-            additionalProperties: true
-          dc:
-            $ref: #/definitions/dc_element
-          dcterms:
-            $ref: #/definitions/dcterms
+          storage:
+            type: integer
+            title: 文件内容的存储方式
+            default: 0
+            description: |
+              文件内容的存储方式包括：
+              0. GridFs（默认）: 存储在MongoDB的GridFS中
+              1. Database: 以FileContent对象存储在数据库中
+              2. FileSystem: 存储在本地文件系统中
+              3. Device: 存储在远程设备上
+              10+. DistributedFileSystem: 存储在分布式文件系统中
+          type:
+            type: integer
+            title: 文件内容的类型
+            default: 0
+            description: |
+              文件内容的类型包括：
+              0. binaray(默认): 二进制类型，文件大小对应内容的字节数
+              1. object: 对象类型，可导出为XML/JSON/YAML格式。文件内容中可包含多个对象，文件大小对应文件内容中的对象数
+              2. text: 文本类型，以MultilingualText对象存储
+          uri:
+            type: string
+            title: 文件内容的读写位置
+            description: |
+              文件内容的读写位置的URI，作为內建程序读取文件内容的位置参数
+              此外，当文件对象为软链接时，该值为软链接源文件路径
+      locked:
+        type: boolean
+        default: false
+        title: 是否锁定
+        description: 锁定文件(夹)，文件(夹)不可被删除、修改、重命名或做硬链接
+      hits:
+        type: object
+        title: 点击数
+        description: 文件的被访问次数
+        properties:
+          o:
+            type: integer
+            default: 0
+            description: 文件所有者访问次数
+          g:
+            type: integer
+            default: 0
+            description: 文件所有组(除所有者外)访问次数
+          u:
+            type: integer
+            default: 0
+            description: 文件有权用户(除所有者、所有组外)访问次数
+          p:
+            type: integer
+            default: 0
+            description: 公众用户(除有权用户外)访问次数
+  FileContent:
+    type: object
+    title: 文件内容
+    description: 文件内容，存储在MongoDB.contents集合中
+  FileAttributes:
+    type: object
+    title: 文件扩展属性
+    description: |
+      文件扩展属性，存储在MongoDB.xattrs集合中，第一层为命名空间，建议采用RDF规则表述，未知命名空间数据分表存储
+    properties:
+      user:
+        type: object
+        description: 用户自定义扩展属性的命名空间，参考Linux XAttrs，操作权限直接由文件权限约束
+        additionalProperties: true
+      system:
+        type: object
+        description: 系统自定义扩展属性的命名空间，参考Linux XAttrs，仅超级管理员可写
+        additionalProperties: true
+      dc:
+        $ref: #/definitions/dc_element
+      dcterms:
+        $ref: #/definitions/dcterms
+  FileComments:
+    type: object
+    title: 文件评论
+    description: 对于文件的评论，存储在MongoDB.comments集合中
+
 
 
 
