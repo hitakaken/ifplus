@@ -7,13 +7,13 @@ definitions:
       contributor:
         $ref: #/definitions/StringArray
         title: 其他责任者
-        description:  |
+        description: |
           对资源的内容做出贡献的其他实体。
           其他责任者的实例可包括个人、组织或某项服务。一般而言，用其他责任者的名称来标识这一条目。
       coverage:
         $ref: #/definitions/StringArray
         title: 覆盖范围
-        description:  |
+        description: |
           资源内容所涉及的外延或范围。
           覆盖范围一般包括空间位置（一个地名或地理坐标）、时间区间（一个时间标识、日期或一个日期范围）
           或者行政辖区的范围（比如指定的一个行政实体）。推荐覆盖范围最好是取自于一个受控词表

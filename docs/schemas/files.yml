@@ -91,7 +91,7 @@ definitions:
               description: 由占位码 0x80000000 | 16进制权限掩码 0x[03][FF][FF][FF] 组成，
               前2位16进制码中 01 该条目可被继承， 02 该条目为继承的条目
               后6位16进制吗中每8个bit为一组，分别代表 allow(被允许的)、deny(被拒绝的)、grant(可授权的权限)
-              8位bit分别代表 读、写、执行、删(特殊)、变更ACL、变更、扩展属性、点赞/标签/评论 8个权限
+              8位bit分别代表 读、写、执行、删、变更ACL权限、变更扩展属性、反馈(点赞/标签/评论)、保留 8个权限
       xattrs:
         $ref: #/definitions/FileAttributes
         title: 扩展属性
