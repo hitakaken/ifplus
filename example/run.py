@@ -15,4 +15,4 @@ def start():
     app.fs.start()
 
 if __name__ == '__main__':
-    app.socketio.run(app, host='127.0.0.1', port=5000, debug=True)
+    app.socketio.run(app, host='0.0.0.0', port=5000, debug=True)
