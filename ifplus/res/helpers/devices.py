@@ -18,11 +18,29 @@ class MongoDevice(Operations):
     def __init__(self, mongo, **kwargs):
         self.mongo = mongo
         self.root = kwargs['root'] if 'root' in kwargs else None
+        self.root_node = FileObject('/', underlying={
+            '_id': None, 'ancestors': [], 'name': None, "uid": None, "gid": None, "mode": 0x80000000 | 0o040750
+        })
 
     def real_path(self, path):
         return path if self.root is None else path.join(self.root, path)
 
+    def path_node(self, path):
+        """当前路径对应的文件节点对象"""
+        if path == '/':
+            return self.root_node
+        part_names = filter(bool, self.real_path(path).split('/'))
+        ancestors = part_names[:-1]
+        name = part_names[-1]
+        document = self.mongo.db.files.find_one({
+            'ancestors': ancestors, 'name': name
+        })
+        return self.create_node(document) if document is not None else None
+
     def path_nodes(self, path):
+        """当前路径对应的文件节点及其祖先节点对象列表"""
+        if path == '/':
+            return [self.root_node]
         part_names = filter(bool, self.real_path(path).split('/'))
         nodes = []
         parent = None
@@ -46,13 +64,13 @@ class MongoDevice(Operations):
 
     @staticmethod
     def create_document(name, parent, mode=0o750, mask=S_IFDIR, **kwargs):
+        """创建JSON文档"""
         now = datetime.datetime.now()
         if parent is not None:
             ancestors = parent.underlying[u'ancestors']
             ancestors.append(parent.underlying[u'name'])
         else:
             ancestors = []
-        print ancestors
         return {
                 u'_id': ObjectId(),
                 u'name': name,
@@ -70,7 +88,8 @@ class MongoDevice(Operations):
                 u'acl': parent.acl().inherit_acl() if parent is not None else [],
                 u'size': 0,
                 u'nlink': 0,
-                u'xattrs': {}
+                u'content': { u'storage': 0, u'type': 0, },
+                u'xattrs': {u'user': {}, u'system': {}, },
             }
 
     def create_node(self, document):
