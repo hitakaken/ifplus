@@ -25,6 +25,8 @@ install_requires = [
     'watchdog',
     'socketIO-client',
     'flask-socketio',
+    'flask-redis',
+    'redis',
     'gevent',
     'gevent-websocket',
     'PyYAML',
