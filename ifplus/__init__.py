@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask_pymongo import PyMongo
+from flask.ext.redis import FlaskRedis
 from .restful import Rest
 from .rbac import RBAC
 from .auth import AuthManager
@@ -11,6 +12,7 @@ class Application(object):
     def __init__(self, app=None, **kwargs):
         self.rest = None
         self.mongo = None
+        self.redis = None
         self.rbac = None
         self.auth = None
         self.res = None
@@ -23,6 +25,8 @@ class Application(object):
         self.rest = Rest(app, **kwargs)
         self.mongo = PyMongo(app)
         setattr(app, 'mongo', self.mongo)
+        self.redis = FlaskRedis(app)
+        setattr(app, 'redis', self.mongo)
         self.rbac = RBAC(app=app, **kwargs)
         self.auth = AuthManager(app=app, **kwargs)
         self.res = VFS(app=app,  mongo=self.mongo, **kwargs)

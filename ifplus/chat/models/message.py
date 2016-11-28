@@ -22,3 +22,4 @@ class Message(object):
     MONGO_INDEXES = [
         IndexModel([('room', ASCENDING), ('ts', DESCENDING)], name='messages_in_room'),
     ]
+

@@ -1,0 +1,24 @@
+definitions:
+  Business:
+    type: object
+    title: 业务
+  Project:
+    type: object
+    title: 项目
+    description:  |
+      项目(Project)
+    properties:
+      business:
+        type: string
+      properties:
+        type: object
+  Step:
+    type: object
+    title: 步骤
+    description: |
+      步骤(Step)
+  Task:
+    type: object
+    title: 任务
+    description: |
+      任务(Task)

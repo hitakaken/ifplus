@@ -208,7 +208,7 @@ class FolderActions(Resource):
         return app.fs.mkdir(file_path, mode, **kwargs).meta().as_dict()
 
     @ns.expect(auth_token_model, mkdir_request_model, upload_model)
-    @ns.doc(id='mkdir')
+    @ns.doc(id='upload')
     @ns.marshal_with(file_meta_model)
     def post(self, file_path):
         args = upload_model.parse_args()
