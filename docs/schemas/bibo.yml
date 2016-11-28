@@ -1,0 +1,173 @@
+definitions:
+  bibo:
+    type: object
+    title: 书目本体
+    description: |
+      书目本体
+      参考：http://purl.org/ontology/bibo/
+      书目本体以RDF格式描述语义网中的书目信息。
+      该本体可以用于引证本体、文档分类本体，或者仅仅作为以RDF描述任何文档的一种方式。
+      它的灵感来自于许多现有的文档描述元数据格式，可用于转换其他书目数据源的一个共同基础。
+    properties:
+      affirmedBy:
+        $ref: #/definitions/StringArray
+        description: A legal decision that affirms a ruling.
+      annotates:
+        $ref: #/definitions/StringArray
+        description: Critical or explanatory note for a Document.
+      authorList:
+        $ref: #/definitions/StringArray
+        title: 作者
+        description: |
+          An ordered list of authors. Normally, this list is seen as a priority list that order authors by importance.
+      citedBy:
+        $ref: #/definitions/StringArray
+        description:  Relates a document to another document that cites the first document.
+      cites:
+        $ref: #/definitions/StringArray
+        description: |
+          Relates a document to another document that is cited by the first document as reference, comment, review,
+          quotation or for another purpose.
+      contributorList:
+        $ref: #/definitions/StringArray
+        description: |
+          An ordered list of contributors. Normally,
+          this list is seen as a priority list that order contributors by importance.
+      court:
+        $ref: #/definitions/StringArray
+        description: |
+          A court associated with a legal document; for example, that which issues a decision.
+      degree:
+        $ref: #/definitions/StringArray
+        title: The thesis degree.
+        description: |
+          We are not defining, using an enumeration, the range of the bibo:degree to the defined list of bibo:
+          ThesisDegree. We won&#39;t do it because we want people to be able to define new degress if needed
+           by some special usecases. Creating such an enumeration would restrict this to happen.
+      director:
+        $ref: #/definitions/StringArray
+        description: A Film director.
+      distributor:
+        $ref: #/definitions/StringArray
+        description: Distributor of a document or a collection of documents.
+      editor:
+        $ref: #/definitions/StringArray
+        description: |
+          A person having managerial and sometimes policy-making responsibility for the editorial part of
+          a publishing firm or of a newspaper, magazine, or other publication.
+      editorList:
+        $ref: #/definitions/StringArray
+      interviewee:
+        $ref: #/definitions/StringArray
+      interviewer:
+        $ref: #/definitions/StringArray
+      issuer:
+        $ref: #/definitions/StringArray
+      organizer:
+        $ref: #/definitions/StringArray
+      owner:
+        $ref: #/definitions/StringArray
+      performer:
+        $ref: #/definitions/StringArray
+      presentedAt:
+        $ref: #/definitions/StringArray
+      presents:
+        $ref: #/definitions/StringArray
+      producer:
+        $ref: #/definitions/StringArray
+      recipient:
+        $ref: #/definitions/StringArray
+      reproducedIn:
+        $ref: #/definitions/StringArray
+      reversedBy:
+        $ref: #/definitions/StringArray
+      reviewOf:
+        $ref: #/definitions/StringArray
+      status:
+        $ref: #/definitions/StringArray
+      subsequentLegalDecision:
+        $ref: #/definitions/StringArray
+      transcriptOf:
+        $ref: #/definitions/StringArray
+      translationOf:
+        $ref: #/definitions/StringArray
+      translator:
+        $ref: #/definitions/StringArray
+      abstract:
+        $ref: #/definitions/StringArray
+      argued:
+        $ref: #/definitions/StringArray
+      asin:
+        $ref: #/definitions/StringArray
+      chapter:
+        $ref: #/definitions/StringArray
+      coden:
+        $ref: #/definitions/StringArray
+      content:
+        $ref: #/definitions/StringArray
+      doi:
+        $ref: #/definitions/StringArray
+      eanucc13:
+        $ref: #/definitions/StringArray
+      edition:
+        $ref: #/definitions/StringArray
+      eissn:
+        $ref: #/definitions/StringArray
+      gtin14:
+        $ref: #/definitions/StringArray
+      handle:
+        $ref: #/definitions/StringArray
+      identifier:
+        $ref: #/definitions/StringArray
+      isbn:
+        $ref: #/definitions/StringArray
+      isbn10:
+        $ref: #/definitions/StringArray
+      isbn13:
+        $ref: #/definitions/StringArray
+      issn:
+        $ref: #/definitions/StringArray
+      issue:
+        $ref: #/definitions/StringArray
+      lccn:
+        $ref: #/definitions/StringArray
+      locator:
+        $ref: #/definitions/StringArray
+      numPages:
+        $ref: #/definitions/StringArray
+      numVolumes:
+        $ref: #/definitions/StringArray
+      number:
+        $ref: #/definitions/StringArray
+      oclcnum:
+        $ref: #/definitions/StringArray
+      pageEnd:
+        $ref: #/definitions/StringArray
+      pageStart:
+        $ref: #/definitions/StringArray
+      pages:
+        $ref: #/definitions/StringArray
+      pmid:
+        $ref: #/definitions/StringArray
+      prefixName:
+        $ref: #/definitions/StringArray
+      section:
+        $ref: #/definitions/StringArray
+      shortDescription:
+        $ref: #/definitions/StringArray
+      shortTitle:
+        $ref: #/definitions/StringArray
+      sici:
+        $ref: #/definitions/StringArray
+      suffixName:
+        $ref: #/definitions/StringArray
+      upc:
+        $ref: #/definitions/StringArray
+      uri:
+        $ref: #/definitions/StringArray
+      volume:
+        $ref: #/definitions/StringArray
+
+
+
+

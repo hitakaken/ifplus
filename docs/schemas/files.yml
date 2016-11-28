@@ -176,6 +176,8 @@ definitions:
         $ref: #/definitions/dc_element
       dcterms:
         $ref: #/definitions/dcterms
+      bibo:
+        $ref: #/definitions/bibo
   FileComments:
     type: object
     title: 文件评论
