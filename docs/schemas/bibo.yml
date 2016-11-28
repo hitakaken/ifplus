@@ -57,22 +57,35 @@ definitions:
           a publishing firm or of a newspaper, magazine, or other publication.
       editorList:
         $ref: #/definitions/StringArray
+        description: |
+          An ordered list of editors. Normally, this list is seen as a priority list that order editors by importance.
       interviewee:
         $ref: #/definitions/StringArray
+        description: An agent that is interviewed by another agent.
       interviewer:
         $ref: #/definitions/StringArray
+        description: An agent that interview another agent.
       issuer:
         $ref: #/definitions/StringArray
+        description: |
+          An entity responsible for issuing often informally published documents such as press releases, reports, etc.
       organizer:
         $ref: #/definitions/StringArray
+        description: |
+          The organizer of an event; includes conference organizers,
+          but also government agencies or other bodies that are responsible for conducting hearings.
       owner:
         $ref: #/definitions/StringArray
+        description: |
+          Owner of a document or a collection of documents.
       performer:
         $ref: #/definitions/StringArray
       presentedAt:
         $ref: #/definitions/StringArray
+        description: Relates a document to an event; for example, a paper to a conference.
       presents:
         $ref: #/definitions/StringArray
+        description: Relates an event to associated documents; for example, conference to a paper.
       producer:
         $ref: #/definitions/StringArray
       recipient:
