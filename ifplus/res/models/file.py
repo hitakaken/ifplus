@@ -343,28 +343,32 @@ class FileObject(object):
         if self.underlying is None and self.filesystem is not None:
             self.underlying = self.filesystem.load(self.file_path)
 
+    @property
+    def is_loaded(self):
+        return self.underlying is None
+
     def meta(self):
-        if self.underlying is None:
+        if not self.is_loaded:
             self.load()
         return FileMetaInfo(self.underlying, filesystem=self.filesystem)
 
     def contents(self):
-        if self.underlying is None:
+        if not self.is_loaded:
             self.load()
         return FileContent(self.underlying, filesystem=self.filesystem)
 
     def xattrs(self):
-        if self.underlying is None:
+        if not self.is_loaded:
             self.load()
         return FileExtraAttributes(self.underlying, filesystem=self.filesystem)
 
     def acl(self):
-        if self.underlying is None:
+        if not self.is_loaded:
             self.load()
         return FileAccessControlList(self.underlying, filesystem=self.filesystem)
 
     def node(self):
-        if self.underlying is None:
+        if not self.is_loaded:
             self.load()
         return FileTreeNode(self.underlying, filesystem=self.filesystem)
 

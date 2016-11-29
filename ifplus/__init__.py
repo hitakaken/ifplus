@@ -26,7 +26,7 @@ class Application(object):
         self.mongo = PyMongo(app)
         setattr(app, 'mongo', self.mongo)
         self.redis = FlaskRedis(app)
-        setattr(app, 'redis', self.mongo)
+        setattr(app, 'redis', self.redis)
         self.rbac = RBAC(app=app, **kwargs)
         self.auth = AuthManager(app=app, **kwargs)
         self.res = VFS(app=app,  mongo=self.mongo, **kwargs)
@@ -36,3 +36,6 @@ class Application(object):
         # print '注册 REST API'
         self.chats.register()
         # print '注册 Socket-IO'
+
+    def run(self, app, **kwargs):
+        self.chats.socketio.run(app, **kwargs)
