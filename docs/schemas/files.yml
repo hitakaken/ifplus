@@ -122,12 +122,14 @@ definitions:
               0. binaray(默认): 二进制类型，文件大小对应内容的字节数
               1. object: 对象类型，可导出为XML/JSON/YAML格式。文件内容中可包含多个对象，文件大小对应文件内容中的对象数
               2. text: 文本类型，以MultilingualText对象存储
+              3. url: 外部链接
           uri:
             type: string
             title: 文件内容的读写位置
             description: |
               文件内容的读写位置的URI，作为內建程序读取文件内容的位置参数
-              此外，当文件对象为软链接时，该值为软链接源文件路径
+              当文件对象为软链接时，该值为软链接源文件路径
+              当内容类型为 3.url 时，对应为外部链接的链接地址
       locked:
         type: boolean
         default: false
