@@ -3,11 +3,12 @@
 import stat
 from pymongo import IndexModel, ASCENDING, DESCENDING
 from ifplus.restful.patched import fields
+from ifplus.restful.datatypes import KEY_VALUE_PAIR
 from .acl import AccessControlList
 
-META_ATTRIBUTE_NAMES = ['name','dev', 'nlink', 'size',
+META_ATTRIBUTE_NAMES = ['name', 'dev', 'nlink', 'size',
                         'mode', 'uid', 'gid', 'create', 'creator',
-                        'atime', 'mtime', 'ctime']
+                        'atime', 'mtime', 'ctime', 'hits']
 
 
 class BaseFileNode(object):
@@ -99,15 +100,16 @@ class FileMetaInfo(BaseFileNode):
             'create': fields.DateTime(title='创建时间'),
             'creator': fields.String(title='创建者'),
             'perms': fields.String(title='访问者权限'),
-            'hits': fields.Nested({
+            'hits': fields.Nested(ns.model("FileHits", {
                 'o': fields.Integer(title='所有者访问数'),
                 'g': fields.Integer(title='所有者访问数'),
                 'u': fields.Integer(title='用户访问数'),
                 'p': fields.Integer(title='公众访问数'),
-            }, title='点击数'),
+            }), title='点击数'),
         })
 
-    def as_dict(self):
+    @classmethod
+    def as_dict(cls, fileObj, **kwargs):
         result = {
             'name': self.name, 'fid': str(self.fid),
             'mode': u'%06o' % (0o0177777 & self.mode), 'nlink': self.nlink, 'size': self.size,
@@ -123,6 +125,8 @@ class FileMetaInfo(BaseFileNode):
             result['create'] = self.create
         if self.creator is not None:
             result['creator'] = self.creator
+        if self.hits is not None:
+            result['hits'] = self.hits
         return result
 
     MONGO_INDEXES = [
@@ -209,10 +213,7 @@ class FileExtraAttributes(BaseFileNode):
     @classmethod
     def model(cls, ns):
         return ns.model('FileXAttrs', {
-            'xattrs': fields.List(fields.Nested({
-                'key': fields.String(description='属性名'),
-                'value': fields.String(description='属性值')
-            }))
+            'xattrs': fields.Nested(KEY_VALUE_PAIR, as_list=True, title="扩展属性"),
         })
 
 
@@ -379,9 +380,6 @@ class FileObject(object):
             'parent': fields.String(description='父节点', required=True),
             'meta': fields.Nested(meta_model, description='文件元信息'),
             'content': fields.Nested(content_model, description='文件内容信息'),
-            'xattrs': fields.List(fields.Nested({
-                'key': fields.String(description='属性名'),
-                'value': fields.String(description='属性值')
-            })),
+            'xattrs': fields.Nested(KEY_VALUE_PAIR, as_list=True, title="扩展属性"),
             'acl': fields.List(fields.String, description='ACL条目')
         })

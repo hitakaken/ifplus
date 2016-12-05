@@ -6,6 +6,21 @@ from ifplus.restful.patched import Namespace, Resource
 from ..models.user import User
 from ..models.role import Role
 
+# authenticate
+# isUserMemberOf
+# find
+# findUser
+# findGroup
+# findUsers
+# findGroups
+# groupExists
+# userExists
+# getGroupMembershipForGroup
+# getGroupMembershipForUser
+# getUsersForGroup
+# getRootDSE
+# findDeletedObjects
+
 ns = Namespace('usr',
                title='用户系统API',
                version='1.0',

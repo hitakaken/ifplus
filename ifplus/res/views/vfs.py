@@ -22,6 +22,7 @@ errno_model = FuseOSError.model(ns)
 @ns.errorhandler(FuseOSError)
 @ns.marshal_with(errno_model, code=500, description='文件系统错误')
 def handle_fuse_os_error(error):
+    """File System Responses With Errno code"""
     resp = {
         'errno': error.errno,
         'message': str(error)
