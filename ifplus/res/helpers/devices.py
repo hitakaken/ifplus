@@ -6,13 +6,19 @@ from stat import *
 
 from ..base.operations import Operations, FuseOSError
 from ..models.file import FileObject
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 
 PLACEHOLDER = 0x80000000
 
 
-class MongoDevice(Operations):
+class VirtualDevice(Operations):
+    @abstractmethod
+    def dev_id(self):
+        pass
+
+
+class MongoDevice(VirtualDevice):
     __metaclass__ = ABCMeta
 
     def __init__(self, mongo, **kwargs):

@@ -8,14 +8,14 @@ from .local.virtual import VirtualDevice
 from .devices import MongoDevice
 
 
-class VirtualFileSystem(MongoDevice):
+class VirtualFileSystem(Operations):
     def __init__(self, mongo, devices=None, **kwargs):
         super(VirtualFileSystem, self).__init__(mongo, **kwargs)
         self.mongo = mongo  # MongoDB Collection: files
         self.fs = self
         if devices is None:
             devices = {
-                '/': VirtualDevice(u'/', fs=self)
+                '/': MongoDevice(u'/', fs=self)
             }
         self.devices = devices
 
@@ -94,8 +94,8 @@ class VirtualFileSystem(MongoDevice):
     def mknod(self, path, mode, dev, **kwargs):
         raise FuseOSError(EROFS)
 
-    # def open(self, path, flags, **kwargs):
-    #    return 0
+    def open(self, path, flags, **kwargs):
+       return 0
 
     def opendir(self, path, **kwargs):
         return 0
@@ -103,11 +103,11 @@ class VirtualFileSystem(MongoDevice):
     def read(self, path, size, offset, fh, **kwargs):
         return FuseOSError(EIO)
 
-    # def read(self, path, size, offset, fh, **kwargs):
-    #    return FuseOSError(EIO)
+    def read(self, path, size, offset, fh, **kwargs):
+       return FuseOSError(EIO)
 
-    # def readdir(self, path, fh, **kwargs):
-    #    return ['.', '..']
+    def readdir(self, path, fh, **kwargs):
+       return ['.', '..']
 
     def readlink(self, path, **kwargs):
         return FuseOSError(ENOENT)
@@ -144,12 +144,12 @@ class VirtualFileSystem(MongoDevice):
         """Times is a (atime, mtime) tuple. If None use current time."""
         return 0
 
-    # def write(self, path, data, offset, fh, **kwargs):
-    #     raise FuseOSError(EROFS)
+    def write(self, path, data, offset, fh, **kwargs):
+        raise FuseOSError(EROFS)
 
-    # def getfacl(self, path, **kwargs):
-    #    raise FuseOSError(EOPNOTSUPP)
+    def getfacl(self, path, **kwargs):
+       raise FuseOSError(EOPNOTSUPP)
 
-    # def setfacl(self, path, ace, **kwargs):
-    #    raise FuseOSError(EOPNOTSUPP)
+    def setfacl(self, path, ace, **kwargs):
+       raise FuseOSError(EOPNOTSUPP)
 

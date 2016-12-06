@@ -54,6 +54,7 @@ class CheckToken(Resource):
         """
         args = token_request.parse_args()
         user = app.tokens.load_user_from_token(args['token'])
+        print user.roles
         return {'token': args['token']}
 
 
@@ -66,7 +67,7 @@ class RefreshToken(Resource):
         """
         Refresh Token
 
-        :raises SecurityException: Refresh Token Failed
+        :raises Unauthorized: Refresh Token Failed
         """
         args = token_request.parse_args()
         user = app.rbac.tokens.load_user_from_token(args['token'])
