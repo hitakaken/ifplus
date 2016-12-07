@@ -14,8 +14,8 @@ PLACEHOLDER = 0x80000000
 
 class VirtualDevice(Operations):
     @abstractmethod
-    def dev_id(self):
-        pass
+    def dev(self):
+        return None
 
 
 class MongoDevice(VirtualDevice):
@@ -27,6 +27,10 @@ class MongoDevice(VirtualDevice):
         self.root_node = FileObject('/', underlying={
             '_id': None, 'ancestors': [], 'name': None, "uid": None, "gid": None, "mode": 0x80000000 | 0o040750
         })
+        self.dev = kwargs.get('dev', None)
+
+    def dev(self):
+        return self.dev
 
     def real_path(self, path):
         return path if self.root is None else path.join(self.root, path)

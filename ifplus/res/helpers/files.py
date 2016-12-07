@@ -4,13 +4,13 @@ import os
 from errno import *
 from ..base.operations import Operations, FuseOSError
 from ..models.file import FileMetaInfo, FileTreeNode, FileObject
-from .local.virtual import VirtualDevice
+# from .local.virtual import VirtualDevice
 from .devices import MongoDevice
 
 
 class VirtualFileSystem(Operations):
     def __init__(self, mongo, devices=None, **kwargs):
-        super(VirtualFileSystem, self).__init__(mongo, **kwargs)
+        # super(VirtualFileSystem, self).__init__(**kwargs)
         self.mongo = mongo  # MongoDB Collection: files
         self.fs = self
         if devices is None:
@@ -91,6 +91,9 @@ class VirtualFileSystem(Operations):
     def listxattr(self, path, **kwargs):
         return []
 
+    def mkdir(self, path, mode, **kwargs):
+        pass
+
     def mknod(self, path, mode, dev, **kwargs):
         raise FuseOSError(EROFS)
 
@@ -129,6 +132,9 @@ class VirtualFileSystem(Operations):
 
     def setxattr(self, path, name, value, options, position=0, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
+
+    def statfs(self, path, **kwargs):
+        pass
 
     def symlink(self, target, source, **kwargs):
         """creates a symlink `target -> source` (e.g. ln -s source target)"""

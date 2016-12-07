@@ -46,6 +46,7 @@ fs_requests = Operations.requests(ns)
 mode_pattern = re.compile('^[0-7]{3}$')
 
 
+
 # 通用处理
 # 路径处理
 def normalize_file_path(file_path, user=None):
@@ -152,6 +153,7 @@ class FaclAction(Resource):
 
 
 @ns.route('/file/<path:file_path>')
+@ns.doc(params={'file_path': '文件路径'})
 class FileAction(Resource):
     @ns.expect(auth_token_model)
     @ns.doc(id='read')
