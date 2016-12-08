@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import stat
 from .inodes import FileINode
 
 M_NONE = 0b00000000  # 无权限
@@ -30,8 +31,28 @@ class FileAcls(FileINode):
         """是否文件所有者"""
         return user is not None and not user.is_anonymous and self.owner is not None and self.owner in user.sids
 
+    def is_group(self, user=None):
+        """是否文件所在组"""
+        return user is not None and not user.is_anonymous and self.group is not None and self.group in user.sids
+
     def perms(self, user=None):
         """获取用户权限"""
+        allow = 0x00
+        deny = 0x00
+        grant = 0x00
+        if self.is_owner(user=user):
+            grant |= 0xFF
+            allow |= self.mode & 0o700 >> 1
+        if self.is_group(user=user):
+            allow |= self.mode & 0o070 << 2
+        for ace in self.acl:
+            if ace[u'sid'] in user.sids:
+                e_allow = (ace[u'mask'] & 0xFF0000) >> 16
+                e_deny = (ace[u'mask'] & 0xFF00) >> 8
+                e_grant = (ace[u'mask'] & 0xFF)
+
+                grant |= e_grant
+
         return None
 
     def get_acl(self, result=None):
