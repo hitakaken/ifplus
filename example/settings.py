@@ -3,7 +3,7 @@ MONGO_HOST = '10.1.80.180'
 MONGO_PORT = 27017
 MONGO_DBNAME = 'ifplus'
 
-REDIS_URL = "redis://:password@localhost:6379/0"
+REDIS_URL = "redis://10.1.80.180:6379/0"
 
 LDAP = {
     'BASE_DN': 'dc=chinaconsult,dc=com',

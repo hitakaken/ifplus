@@ -5,9 +5,35 @@ from pymongo import IndexModel, ASCENDING, DESCENDING
 from ifplus.restful.patched import fields
 from .acl import AccessControlList
 
-META_ATTRIBUTE_NAMES = ['name', 'dev', 'nlink', 'size',
+META_ATTRIBUTE_NAMES = ['name','dev', 'nlink', 'size',
                         'mode', 'uid', 'gid', 'create', 'creator',
                         'atime', 'mtime', 'ctime']
+
+
+class BaseFileNode(object):
+    def __init__(self, underlying, filesystem=None):
+        self.__dict__['underlying'] = underlying
+        self.__dict__['filesystem'] = filesystem
+
+    def meta(self):
+        self.__class__ = FileMetaInfo
+        return self
+
+    def contents(self):
+        self.__class__ = FileContent
+        return self
+
+    def xattrs(self):
+        self.__class__ = FileExtraAttributes
+        return self
+
+    def acl(self):
+        self.__class__ = FileAccessControlList
+        return self
+
+    def node(self):
+        self.__class__ = FileTreeNode
+        return self
 
 
 class FileMetaInfo(BaseFileNode):
@@ -58,7 +84,28 @@ class FileMetaInfo(BaseFileNode):
     @classmethod
     def model(cls, ns):
         """Swagger UI Model"""
-
+        return ns.model('FileMetaInfo', {
+            'name': fields.String(title='文件名', description='文件名', required=True),
+            'fid': fields.String(title='唯一标识', required=True),
+            'mode': fields.String(title='文件模式', required=True),
+            'dev': fields.String(title='所在设备'),
+            'nlink': fields.Integer(title='链接数', required=True),
+            'owner': fields.String(title='所有者'),
+            'group': fields.String(title='所在组'),
+            'size': fields.Integer(title='文件大小', required=True),
+            'access': fields.DateTime(title='最后访问时间', required=True),
+            'modify': fields.DateTime(title='最后修改时间', description='上一次文件内容变动的时间', required=True),
+            'change': fields.DateTime(title='最后变更时间', description='上一次文件信息变动的时间', required=True),
+            'create': fields.DateTime(title='创建时间'),
+            'creator': fields.String(title='创建者'),
+            'perms': fields.String(title='访问者权限'),
+            'hits': fields.Nested({
+                'o': fields.Integer(title='所有者访问数'),
+                'g': fields.Integer(title='所有者访问数'),
+                'u': fields.Integer(title='用户访问数'),
+                'p': fields.Integer(title='公众访问数'),
+            }, title='点击数'),
+        })
 
     def as_dict(self):
         result = {

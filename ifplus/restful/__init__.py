@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from .patched import Api
 from flask import Blueprint
+from datatypes import ns
 
 
 class Rest(object):
@@ -8,6 +9,7 @@ class Rest(object):
         self.api = Api(title='IF+ Restful API',
                        version='1.0',
                        description='IF+ Restful API')
+        self.api.add_namespace(ns)
         self.app = None
         self.url_prefix = None
         self.kwargs = {}

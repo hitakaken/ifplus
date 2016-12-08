@@ -30,22 +30,9 @@ class Operations(object):
             raise FuseOSError(EFAULT)
         return getattr(self, op)(*args, **kwargs)
 
-    @classmethod
-    def fs_action_response_model(cls, ns):
-        return ns.model('FsActionResponse', {
-            'status': fields.Integer(description='状态'),
-            'msg': fields.String(desctipion='消息')
-        })
-
     @abstractmethod
     def access(self, path, mode, **kwargs):
         return 0
-
-    @classmethod
-    def access_request_model(cls, ns):
-        parser = ns.parser()
-        parser.add_argument('mode', location='args')
-        return parser
 
     @abstractmethod
     def chmod(self, path, mode, **kwargs):
@@ -96,15 +83,6 @@ class Operations(object):
     @abstractmethod
     def mkdir(self, path, mode, **kwargs):
         raise FuseOSError(EROFS)
-
-    @classmethod
-    def mkdir_request_model(cls, ns):
-        parser = ns.parser()
-        parser.add_argument('usr', location='args', help='指定所有者')
-        parser.add_argument('grp', location='args', help='指定所有组')
-        parser.add_argument('mod', location='args', help='指定权限掩码')
-        parser.add_argument('fce', type=bool, location='args', help='是否创建父节点')
-        return parser
 
     @abstractmethod
     def mknod(self, path, mode, dev, **kwargs):
@@ -180,29 +158,67 @@ class Operations(object):
     def write(self, path, data, offset, fh, **kwargs):
         raise FuseOSError(EROFS)
 
-    @classmethod
-    def upload_model(cls, ns):
-        parser = ns.parser()
-        parser.add_argument('file', location='files', type=FileStorage, required=True, help='上传文件')
-        parser.add_argument('usr', location='args', help='指定所有者')
-        parser.add_argument('grp', location='args', help='指定所有组')
-        parser.add_argument('mod', location='args', help='指定权限掩码')
-        parser.add_argument('fce', type=bool, location='args', help='是否创建父节点')
-        parser.add_argument('ovw', type=bool, location='args', help='是否覆盖')
-        return parser
-
     @abstractmethod
     def getfacl(self, path, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
 
-    @classmethod
-    def acl_request_model(cls, ns):
-        parser = ns.parser()
-        parser.add_argument('ace', location='args', required=True, action='append',
-                            help='ACL条目，格式：[u|g|r]:<UUID>:[FFFFFFFF]')
-        parser.add_argument('scan', type=bool, location='args', help='是否遍历')
-        return parser
-
     @abstractmethod
     def setfacl(self, path, aces, **kwargs):
         raise FuseOSError(EOPNOTSUPP)
+
+    @classmethod
+    def requests(cls, ns):
+        """Restful请求解析器"""
+        # Access Request Parser
+        access_parser = ns.parser()
+        access_parser.add_argument('mod', location='args', required=True, help="指定权限掩码")
+        # Chmod Request Parser
+        chmod_parser = access_parser.copy()
+        chmod_parser.add_argument('rcs', location='args', help="是否递归")
+        # Chown Request Parser
+        chown_parser = ns.parser()
+        chown_parser.add_argument('own', location='args', help='指定所有者')
+        chown_parser.add_argument('grp', location='args', help='指定所有组')
+        # Mkdir Request Parser
+        mkdir_parser = chown_parser.copy()
+        mkdir_parser.add_argument('mod', location='args', help='指定权限掩码')
+        mkdir_parser.add_argument('fce', type=bool, location='args', help='是否创建父节点')
+        # Rename Request Parser
+        rename_parser = ns.parser()
+        rename_parser.add_argument('tgt', location='args', required=True, help='目标文件名')
+        rename_parser.add_argument('fce', type=bool, location='args', help='是否创建父节点')
+        # Recursive Request Parser
+        recursive_parser = ns.parser()
+        recursive_parser.add_argument('rcs', location='args', help="是否递归")
+        # Upload Request Parser
+        upload_parser = mkdir_parser.copy()
+        upload_parser.add_argument('file', location='files', type=FileStorage, required=True, help='上传文件')
+        upload_parser.add_argument('ovw', type=bool, location='args', help='是否覆盖')
+        # Xattrs Request Parser
+        xattrs_parser = ns.parser()
+        xattrs_parser.add_argument('xattrs.name', location='args', required=True, action='append', help='扩展属性名')
+        xattrs_parser.add_argument('xattrs.value', location='args', action='append', help='扩展属性值')
+        xattrs_parser.add_argument('flag', location='args', help='扩展属性设置标志')
+        # ACL Request Parser
+        acl_parser = ns.parser()
+        acl_parser.add_argument('ace', location='args', required=True, action='append',
+                                help='ACL条目，格式：[u|g|r]:<UUID>:[FFFFFFFF]')
+        acl_parser.add_argument('rcs', type=bool, location='args', help='是否递归')
+        return {
+            'access': access_parser,
+            'chmod': chmod_parser,
+            'chown': chown_parser,
+            'mkdir': mkdir_parser,
+            'rename': rename_parser,
+            'recursive': recursive_parser,
+            'upload': upload_parser,
+            'xattrs': xattrs_parser,
+            'acl': acl_parser,
+        }
+
+    @classmethod
+    def fs_action_response_model(cls, ns):
+        return ns.model('FsActionResponse', {
+            'status': fields.Integer(description='状态'),
+            'msg': fields.String(desctipion='消息')
+        })

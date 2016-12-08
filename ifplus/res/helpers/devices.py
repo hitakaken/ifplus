@@ -6,13 +6,19 @@ from stat import *
 
 from ..base.operations import Operations, FuseOSError
 from ..models.file import FileObject
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 
 PLACEHOLDER = 0x80000000
 
 
-class MongoDevice(Operations):
+class VirtualDevice(Operations):
+    @abstractmethod
+    def dev(self):
+        return None
+
+
+class MongoDevice(VirtualDevice):
     __metaclass__ = ABCMeta
 
     def __init__(self, mongo, **kwargs):
@@ -21,6 +27,10 @@ class MongoDevice(Operations):
         self.root_node = FileObject('/', underlying={
             '_id': None, 'ancestors': [], 'name': None, "uid": None, "gid": None, "mode": 0x80000000 | 0o040750
         })
+        self.dev = kwargs.get('dev', None)
+
+    def dev(self):
+        return self.dev
 
     def real_path(self, path):
         return path if self.root is None else path.join(self.root, path)
