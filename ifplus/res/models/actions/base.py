@@ -12,9 +12,10 @@ class BaseFileNode(object):
         # 变更列表
         self.changes = {
             u'inodes': set(),
+            u'acl': False,
+            u'hits': 0,
             u'content': set(),
-            u'xattrs': set(),
-            u'acl': set()
+            u'xattrs': set()
         }
         # 是否新建文件对象
         self.newly = underlying is None

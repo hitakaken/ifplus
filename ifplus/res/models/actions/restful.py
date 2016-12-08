@@ -17,6 +17,13 @@ FILE_INODE = {
     u'creator': fields.String(title=u'创建者', required=True),
 }
 
+FILE_PERMISSIONS = {
+    u'perm': fields.List(
+        fields.Integer,
+        title=u'用户权限',
+        required=True, min_items=24, max_items=24)
+}
+
 FILE_ACE = {
     u'sid': fields.String(
         title=u'用户SID',
@@ -27,6 +34,15 @@ FILE_ACE = {
         title=u'用户权限',
         description=u'',
         required=True, min_items=26, max_items=26)
+}
+
+FILE_HITS = {
+    u'hits': fields.Nested({
+        u'o': fields.Integer(title=u'所有者点击', description=u'文件所有者访问文件内容的次数'),
+        u'g': fields.Integer(title=u'所有组点击', description=u'文件所有组访问文件内容的次数'),
+        u'u': fields.Integer(title=u'责任者点击', description=u'文件责任者(具有写权限)访问文件内容的次数'),
+        u'p': fields.Integer(title=u'公众访问数', description=u'其他用户访问文件内容的次数'),
+    }, title=u'点击数'),
 }
 
 

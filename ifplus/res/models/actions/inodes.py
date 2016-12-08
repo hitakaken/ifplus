@@ -24,6 +24,10 @@ class FileINode(BaseFileNode):
     def __init__(self, underlying, vfs=None):
         super(FileINode, self).__init__(underlying, vfs=vfs)
 
+    def init_inode(self):
+        """初始化文件INode属性"""
+        pass
+
     @property
     def file_id(self):
         """文件唯一标识"""
@@ -247,7 +251,3 @@ class FileINode(BaseFileNode):
         """将inode信息记录到临时结果"""
         self.result = self.get_inodes(result=self.result)
         return self
-
-
-
-
