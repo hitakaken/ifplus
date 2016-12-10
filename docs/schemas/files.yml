@@ -112,6 +112,7 @@ definitions:
               1. Database: 以FileContent对象存储在数据库中
               2. FileSystem: 存储在本地文件系统中
               3. Device: 存储在远程设备上
+              4. HTTP远程连接
               10+. DistributedFileSystem: 存储在分布式文件系统中
           type:
             type: integer
@@ -130,6 +131,11 @@ definitions:
               文件内容的读写位置的URI，作为內建程序读取文件内容的位置参数
               当文件对象为软链接时，该值为软链接源文件路径
               当内容类型为 3.url 时，对应为外部链接的链接地址
+          secret:
+            type: boolean
+            title: 保密
+            description: |
+              文件内容是否保密
       locked:
         type: boolean
         default: false
@@ -156,6 +162,14 @@ definitions:
             type: integer
             default: 0
             description: 公众用户(除有权用户外)访问次数
+      comments:
+        type: object
+        title: 文件评论参数
+        description: 文件对象的评论参数
+        properties:
+          enabled:
+            type: boolean
+            title: 可评论
   FileContent:
     type: object
     title: 文件内容

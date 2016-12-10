@@ -1,6 +1,7 @@
 flask
 six
 python-ldap
+hashids
 PyJWT
 msgpack-python
 flask-login
@@ -12,6 +13,7 @@ webargs
 flask-marshmallow
 flatdict
 bidict
+dpath
 pymongo
 Flask-PyMongo
 watchdog

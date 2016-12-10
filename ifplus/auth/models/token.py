@@ -12,11 +12,13 @@ class UserToken(UserMixin):
         self.roles = [] if roles is None else roles
         self.groups = [] if groups is None else groups
 
+    @property
     def sid(self):
         return u'u:' + self.id
 
+    @property
     def sids(self):
-        sids = [self.sid()]
+        sids = [self.sid]
         for uid in self.alias:
             sids.append(u'u:' + uid)
         for role in self.roles:

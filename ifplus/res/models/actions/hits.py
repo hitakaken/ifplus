@@ -25,20 +25,22 @@ class FileHits(FileAcls):
         """文件对象点击数"""
         return self.underlying[u'hits']
 
-    def hit(self, user=None):
+    def hit(self, user=None, atime=None):
+        """文件点击"""
         if self.is_owner(user=user):
             self.changes[u'hits'] = OWNER_HIT
-            return
-        if self.is_group(user=user):
+        elif self.is_group(user=user):
             self.changes[u'hits'] = GROUP_HIT
-            return
-        allow, deny, grant = self.perms(user=user)
-        if allow & M_WRITE > 0:
-            self.changes[u'hits'] = CONTRIBUTOR_HIT
         else:
-            self.changes[u'hits'] = PUBLIC_HIT
+            allow, deny, grant = self.perms(user=user)
+            if allow & M_WRITE > 0:
+                self.changes[u'hits'] = CONTRIBUTOR_HIT
+            else:
+                self.changes[u'hits'] = PUBLIC_HIT
+        self.visited(atime=atime)
 
     def get_hits(self, result=None):
+        """获取文件点击数"""
         if result is None:
             result = {}
         result.update({
@@ -47,5 +49,6 @@ class FileHits(FileAcls):
         return result
 
     def record_hits(self):
+        """记录文件点击数到临时结果"""
         self.result = self.get_hits(result=self.result)
         return self

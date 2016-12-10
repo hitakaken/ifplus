@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-import six
 from errno import EPERM
 from ...base.operations import FuseOSError
 from .inodes import FileINode
@@ -29,7 +29,7 @@ def record_old(old_aces, changes):
 
 def check_changes(changes, grant):
     change_mask = 0x00
-    for sid, ace in changes.items():
+    for (sid, ace) in changes.items():
         if u'old' in ace and u'new' in ace:
             change = ace[u'old'] ^ ace[u'new']
             change_mask |= ((change & 0xFF0000) >> 16) | ((change & 0xFF00) >> 8) | (change & 0xFF)
@@ -57,15 +57,24 @@ class FileAcls(FileINode):
         """底层权限控制列表"""
         return self.underlying.get(u'acl', [])
 
+    @property
+    def inherits(self):
+        """可被继承的ACL权限"""
+        inherits = []
+        for ace in self.acl:
+            if ace[u'mask'] & 0x01000000 > 0:
+                inherits.append(ace)
+        return inherits
+
     @acl.setter
     def acl(self, aces):
         """设置底层权限控制列表"""
         self.underlying[u'acl'] = aces
         self.changes[u'acl'] = True
 
-    def update_acl(self, aces, user=None):
+    def update_acl(self, aces, user=None, perms=None, ctime=None):
         """更新ACL权限列表"""
-        allow, deny, grant = self.perms(user=user)
+        allow, deny, grant = self.user_perms(user=user, perms=perms)
         if allow & M_PWRITE == 0:
             raise FuseOSError(EPERM)
         changes = record_old(list(self.acl), {})
@@ -78,11 +87,12 @@ class FileAcls(FileINode):
             changes[sid][u'new'] = mask
             new_aces.append({u'sid': sid, u'mask': mask})
         check_changes(changes, grant)
+        self.changed(ctime=ctime)
         self.acl = new_aces
 
-    def append_acl(self, aces, user=None):
+    def append_acl(self, aces, user=None, perms=None, ctime=None):
         """添加ACL权限"""
-        allow, deny, grant = self.perms(user=user)
+        allow, deny, grant = self.user_perms(user=user, perms=perms)
         if allow & M_PWRITE == 0:
             raise FuseOSError(EPERM)
         old_aces = list(self.acl)
@@ -107,11 +117,12 @@ class FileAcls(FileINode):
             if u'old' not in changes[sid]:
                 mask = changes[sid][u'new']
                 new_aces.append({u'sid': sid, u'mask': mask})
+        self.changed(ctime=ctime)
         self.acl = new_aces
 
-    def remove_acl(self, sids, user=None):
+    def remove_acl(self, sids, user=None, perms=None, ctime=None):
         """删除ACL权限"""
-        allow, deny, grant = self.perms(user=user)
+        allow, deny, grant = self.user_perms(user=user, perms=perms)
         if allow & M_PWRITE == 0:
             raise FuseOSError(EPERM)
         old_aces = list(self.acl)
@@ -124,6 +135,7 @@ class FileAcls(FileINode):
         for ace in old_aces:
             if ace[u'sid'] not in sids:
                 new_aces.append(ace)
+        self.changed(ctime=ctime)
         self.acl = new_aces
 
     def is_owner(self, user=None):
@@ -134,25 +146,36 @@ class FileAcls(FileINode):
         """是否文件所在组"""
         return user is not None and not user.is_anonymous and self.group is not None and self.group in user.sids
 
+    def is_full_controller(self, user=None, perms=None):
+        """是否具有完全控制权限"""
+        allow, deny, grant = self.user_perms(user=user, perms=perms)
+        return grant & 0xFF > 0
+
+    def user_perms(self, user=None, perms=None ):
+        return self.perms(user=user) if perms is None else perms
+
     def perms(self, user=None):
         """获取用户权限"""
         allow = 0x00
         deny = 0x00
         grant = 0x00
+        if user is not None and not user.is_anonymous and user.is_admin:
+            return  0xFF, 0x00, 0xFF
         if self.is_owner(user=user):
             grant |= 0xFF
             allow |= self.mode & 0o700 >> 1
         if self.is_group(user=user):
             allow |= self.mode & 0o070 << 2
         # 遍历ACL条目
-        for ace in self.acl:
-            if ace[u'sid'] in user.sids:
-                e_allow = (ace[u'mask'] & 0xFF0000) >> 16  # 当前ACL条目允许的权限
-                e_deny = (ace[u'mask'] & 0xFF00) >> 8  # 当前ACL条目拒绝的权限
-                e_grant = (ace[u'mask'] & 0xFF)  # 当前ACL条码可授权的权限
-                allow |= e_allow & ~deny  # 计算后的允许权限
-                deny |= e_deny & ~allow  # 计算后的拒绝权限
-                grant |= e_grant  # 计算后的可授权权限
+        if user is not None and not user.is_anonymous:
+            for ace in self.acl:
+                if ace[u'sid'] in user.sids:
+                    e_allow = (ace[u'mask'] & 0xFF0000) >> 16  # 当前ACL条目允许的权限
+                    e_deny = (ace[u'mask'] & 0xFF00) >> 8  # 当前ACL条目拒绝的权限
+                    e_grant = (ace[u'mask'] & 0xFF)  # 当前ACL条码可授权的权限
+                    allow |= e_allow & ~deny  # 计算后的允许权限
+                    deny |= e_deny & ~allow  # 计算后的拒绝权限
+                    grant |= e_grant  # 计算后的可授权权限
         allow |= self.mode & 0o007 << 5
         return allow, deny, grant
 

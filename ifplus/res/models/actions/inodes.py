@@ -24,9 +24,12 @@ class FileINode(BaseFileNode):
     def __init__(self, underlying, vfs=None):
         super(FileINode, self).__init__(underlying, vfs=vfs)
 
-    def init_inode(self):
+    def init_inode(self, name, times, user=None):
         """初始化文件INode属性"""
-        pass
+        if u'name' not in self.underlying:
+            self.underlying[u'name'] = name
+
+        return self
 
     @property
     def file_id(self):

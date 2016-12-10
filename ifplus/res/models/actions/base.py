@@ -15,7 +15,7 @@ class BaseFileNode(object):
             u'acl': False,
             u'hits': 0,
             u'content': set(),
-            u'xattrs': set()
+            u'xattrs': set(),
         }
         # 是否新建文件对象
         self.newly = underlying is None

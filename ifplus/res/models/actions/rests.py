@@ -45,6 +45,15 @@ FILE_HITS = {
     }, title=u'点击数'),
 }
 
+FILE_XATTRS = {
+    u'xattrs': fields.Nested({
+
+    })
+}
+
+FILE_CONTENT = {
+    u'content': fields.String(title=u'文件内容')
+}
 
 def model(ns):
     """File INode Swagger Model"""
