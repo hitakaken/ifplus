@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
-MONGO_HOST = '10.1.80.180'
+SERVER_IP = '10.1.80.180'
+
+MONGO_HOST = SERVER_IP
 MONGO_PORT = 27017
 MONGO_DBNAME = 'ifplus'
 
-REDIS_URL = "redis://10.1.80.180:6379/0"
+REDIS_URL = 'redis://' + SERVER_IP + ':6379/0'
+
+CACHE = {
+    'CACHE_TYPE': 'redis',
+    'CACHE_KEY_PREFIX': 'ifplus',
+    'CACHE_REDIS_HOST': SERVER_IP,
+    'CACHE_REDIS_PORT': '6379',
+    'CACHE_REDIS_URL': 'redis://' + SERVER_IP + ':6379'
+}
 
 LDAP = {
     'BASE_DN': 'dc=chinaconsult,dc=com',

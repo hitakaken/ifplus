@@ -21,8 +21,11 @@ socketIO-client
 flask-socketio
 flask-redis
 redis
+Flask-Cache
 kafka-python
 logstash-formatter
 gevent
 gevent-websocket
 PyYAML
+gunicorn
+meinheld

@@ -31,6 +31,7 @@ install_requires = [
     'flask-socketio',
     'flask-redis',
     'redis',
+    'Flask-Cache',
     'kafka-python',
     'logstash-formatter',
     'gevent',
