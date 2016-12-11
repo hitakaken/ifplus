@@ -21,6 +21,8 @@ socketIO-client
 flask-socketio
 flask-redis
 redis
+kafka-python
+logstash-formatter
 gevent
 gevent-websocket
 PyYAML

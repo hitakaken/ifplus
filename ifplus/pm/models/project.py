@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ifplus.res.models.file import FileObject
+from ifplus.vfs.models.file import FileObject
 
 
 class Project(FileObject):

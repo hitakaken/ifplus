@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ifplus.restful.patched import fields
-from ifplus.res.models.file import FileObject
+from ifplus.vfs.models.file import FileObject
 
 
 class ChatRoom(FileObject):

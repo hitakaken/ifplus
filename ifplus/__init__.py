@@ -4,7 +4,7 @@ from flask.ext.redis import FlaskRedis
 from .restful import Rest
 from .rbac import RBAC
 from .auth import AuthManager
-from .res import VFS
+from .vfs import VFS
 from .chat import ChatServer
 
 

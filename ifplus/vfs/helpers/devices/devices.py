@@ -4,8 +4,8 @@ from bson import ObjectId
 from errno import *
 from stat import *
 
-from ..base.operations import Operations, FuseOSError
-from ..models.file import FileObject
+from ifplus.vfs.base.operations import Operations, FuseOSError
+from ifplus.vfs.models.file import FileObject
 from abc import ABCMeta, abstractmethod
 
 

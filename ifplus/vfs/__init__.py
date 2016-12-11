@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from .helpers.files import VirtualFileSystem
-from .views.vfs import ns
+from .helpers.vfs import VirtualFileSystem
+from .views.files import ns
 
 
 class VFS(object):
@@ -17,7 +17,7 @@ class VFS(object):
         self.fs = VirtualFileSystem(self.mongo)
         setattr(self.app, 'fs', self.fs)
         self.app.api.add_namespace(ns)
-        from .views.vfs import vfs_bp
+        from .views.files import vfs_bp
         self.app.register_blueprint(vfs_bp, url_prefix='/raw')
 
 
