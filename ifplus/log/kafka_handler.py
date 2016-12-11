@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 from kafka.client import KafkaClient
 from kafka.producer import SimpleProducer, KeyedProducer
-from kafka.conn import DEFAULT_SOCKET_TIMEOUT_SECONDS
+# from kafka.conn import DEFAULT_SOCKET_TIMEOUT_SECONDS
 import logging
+
+DEFAULT_SOCKET_TIMEOUT_SECONDS = 120
+
 
 class KafkaLoggingHandler(logging.Handler):
 
