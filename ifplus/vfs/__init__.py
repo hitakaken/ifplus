@@ -14,11 +14,11 @@ class VFS(object):
 
     def init_app(self, app, **kwargs):
         self.app = app
-        self.fs = VirtualFileSystem(self.mongo)
+        self.fs = VirtualFileSystem(app)
         setattr(self.app, 'fs', self.fs)
         self.app.api.add_namespace(ns)
-        from .views.files import vfs_bp
-        self.app.register_blueprint(vfs_bp, url_prefix='/raw')
+        # from .views.files import vfs_bp
+        # self.app.register_blueprint(vfs_bp, url_prefix='/raw')
 
 
 

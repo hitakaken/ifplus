@@ -4,13 +4,15 @@ from flask_login import UserMixin
 ADMIN_ROLE = u''
 
 
-class UserToken(UserMixin):
-    def __init__(self, account, uid, alias=None, roles=None, groups=None):
-        self.account = account
-        self.id = uid
-        self.alias = [] if alias is None else alias
-        self.roles = [] if roles is None else roles
-        self.groups = [] if groups is None else groups
+class TokenUser(UserMixin):
+    def __init__(self, saved, tokens):
+        self.account = saved[u'account']
+        self.id = saved[u'uid']
+        self.display = saved.get(u'display', self.account)
+        self.alias = saved.get(u'alias',[])
+        self.roles = saved.get(u'roles', [])
+        self.groups = saved.get(u'groups', [])
+        self.tokens = tokens
 
     @property
     def sid(self):

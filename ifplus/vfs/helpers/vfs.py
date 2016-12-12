@@ -8,9 +8,10 @@ from ..models.file import FileObject
 
 
 class VirtualFileSystem(object):
-    def __init__(self, mongo, cache, devices=None, **kwargs):
+    def __init__(self, app, devices=None, **kwargs):
         # super(VirtualFileSystem, self).__init__(**kwargs)
-        self.mongo = mongo  # MongoDB Collection: files
+        self.mongo = app.mongo  # MongoDB Collection: files
+        self.cache = app.cache
 
     def register(self, device):
         pass

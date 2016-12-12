@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask_pymongo import PyMongo
 from flask.ext.redis import FlaskRedis
-from flask.ext.cache import Cache
+from flask_cache import Cache
 from .restful import Rest
 from .rbac import RBAC
-from .auth import AuthManager
+from .auth import Authenticator
 from .vfs import VFS
 from .chat import ChatServer
 
@@ -32,7 +32,7 @@ class Application(object):
         self.cache = Cache(app, config=app.config['CACHE'])
         setattr(app, 'cache', self.cache)
         self.rbac = RBAC(app=app, **kwargs)
-        self.auth = AuthManager(app=app, **kwargs)
+        self.auth = Authenticator(app=app, **kwargs)
         self.res = VFS(app=app,  mongo=self.mongo, **kwargs)
         self.chats = ChatServer(app=app, **kwargs)
 

@@ -32,9 +32,19 @@ LDAP = {
 }
 
 TOKEN = {
-    'HEADER': 'AuthToken',
-    'SECRET': 'core',
-    'EXPIRED': 36000
+    'JWK': {
+        "crv":"P-256",
+        "kty":"EC",
+        "x":"wBxqTBBjXrueERcRKdWone2vW9quAU6YsVpTNE2Vwh0",
+        "y":"zGwNTDXwSQUZK9Qkniy8AKEunyPVcsdJJiM3g3Wrp8k"
+    },
+    'JWT_SIGN': {'alg': 'HS256'},
+    'JWT_ENCRYPT': {'alg': 'A256KW', 'enc': 'A256CC'},
+    'EXPIRED': 3600,
+    'REFRESH_EXPIRED': 36000,
+    'HASHIDS_SALT': 'hashids.chinaconsult.com',
+    'TRUST_PROXIES': {'127.0.0.1'},
+    'SUPERS': set()
 }
 JWT = {
     'secret': 'secret',

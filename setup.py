@@ -12,7 +12,7 @@ install_requires = [
     'six',
     'python-ldap',
     'hashids',
-    'PyJWT',
+    'JWCrypto',
     'msgpack-python',
     'flask-login',
     'flask-restplus',

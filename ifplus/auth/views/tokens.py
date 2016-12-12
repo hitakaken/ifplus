@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import current_app as app
+from flask import current_app as app, request
 from werkzeug.exceptions import NotFound, Unauthorized
 from ifplus.restful.patched import Namespace, Resource, fields
 
@@ -16,10 +16,11 @@ authenticate_request.add_argument('username', required=True, location='form')
 authenticate_request.add_argument('password', required=True, location='form')
 # 令牌 请求
 token_request = ns.parser()
-token_request.add_argument('token', location='form')
+token_request.add_argument('refresh_token', location='form')
 # 令牌 响应
 token_response = ns.model('Token', {
-    'token': fields.String
+    'AuthToken': fields.String(title='令牌'),
+    'RefreshToken': fields.String(title='更新令牌')
 })
 
 
@@ -36,26 +37,7 @@ class Authenticate(Resource):
         :raises Unauthorized:  Authenticate Failed
         """
         args = authenticate_request.parse_args()
-        user = app.rbac.users.authenticate(args['username'], args['password'])
-        return {'token': app.tokens.token(user)}
-
-
-@ns.route('/check')
-class CheckToken(Resource):
-
-    @ns.expect(token_request)
-    @ns.marshal_with(token_response)
-    @ns.doc(id='check_token')
-    def post(self):
-        """
-        Check Token
-
-        :raises Unauthorized: Check Token Failed
-        """
-        args = token_request.parse_args()
-        user = app.tokens.load_user_from_token(args['token'])
-        print user.roles
-        return {'token': args['token']}
+        return app.tokens.authenticate(args['username'], args['password'], request)
 
 
 @ns.route('/refresh')
@@ -70,5 +52,4 @@ class RefreshToken(Resource):
         :raises Unauthorized: Refresh Token Failed
         """
         args = token_request.parse_args()
-        user = app.rbac.tokens.load_user_from_token(args['token'])
-        return {'token': app.tokens.token(user)}
+        return app.tokens.refresh_token(request, args['refresh_token'])

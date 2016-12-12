@@ -6,7 +6,7 @@ from flask import current_app as app, Blueprint
 from flask_login import current_user
 from ifplus.restful.patched import Namespace, Resource
 from ifplus.restful.datatypes import BOOLEAN_VALUE
-from ifplus.auth.models.token import UserToken
+# from ifplus.auth.models.token import UserToken
 from ..base.operations import Operations, FuseOSError
 from ..models.file import *
 

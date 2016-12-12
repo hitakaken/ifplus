@@ -1,8 +1,9 @@
 flask
 six
 python-ldap
+# PyJWT
+JWCrypto
 hashids
-PyJWT
 msgpack-python
 flask-login
 flask-restplus
@@ -28,4 +29,4 @@ gevent
 gevent-websocket
 PyYAML
 gunicorn
-meinheld
+# meinheld
