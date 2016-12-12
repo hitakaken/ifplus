@@ -12,8 +12,8 @@ ns = Namespace('auth',
 
 # 验证 Form
 authenticate_request = ns.parser()
-authenticate_request.add_argument('username', location='args')
-authenticate_request.add_argument('password',  location='args')
+authenticate_request.add_argument('username', required=True, location=['args','form'])
+authenticate_request.add_argument('password', required=True, location=['args','form'])
 # 令牌 请求
 token_request = ns.parser()
 token_request.add_argument('refresh_token', location='form')
@@ -27,9 +27,20 @@ token_response = ns.model('Token', {
 @ns.route('/authenticate')
 class Authenticate(Resource):
     @ns.expect(authenticate_request)
-    # @ns.marshal_with(token_response)
-    @ns.doc(id='authenticate')
+    @ns.doc(id='authenticate',responses={'200': {'description': '用户认证成功', '$ref': '#/definitions/Token'}})
     def get(self):
+        """
+        Authenticate
+
+        :raises NotFound:  User not found
+        :raises Unauthorized:  Authenticate Failed
+        """
+        args = authenticate_request.parse_args()
+        return app.tokens.authenticate(args['username'], args['password'], request)
+
+    @ns.expect(authenticate_request)
+    @ns.doc(id='authenticate',responses={'200': {'description': '用户认证成功', '$ref': '#/definitions/Token'}})
+    def post(self):
         """
         Authenticate
 

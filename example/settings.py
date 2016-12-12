@@ -39,7 +39,13 @@ TOKEN = {
     'REFRESH_EXPIRED': 36000,
     'HASHIDS_SALT': 'hashids.chinaconsult.com',
     'TRUST_PROXIES': {'127.0.0.1'},
-    'SUPERS': set()
+    'SUPERS': set(),
+    'COOKIE': {
+        'DOMAIN': 'localhost',
+        'SECURE': True,
+        'PATH': '/',
+        # 'EXPIRES': 'Sat, 10 Dec 2016 23:38:25 GMT'
+    }
 }
 JWT = {
     'secret': 'secret',

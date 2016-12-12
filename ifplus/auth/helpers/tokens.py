@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import copy
 import datetime
+import json
 import random
 import string
 import time
@@ -157,6 +158,7 @@ class Tokens(object):
         self.hashids = Hashids(salt=config.get('HASHIDS_SALT', 'hashids salt'))
         self.trusted_proxies = config.get('TRUST_PROXIES', set())
         self.supers = config.get('SUPERS', set())
+        self.cookie_config = dict((k.lower, v) for (k,v) in config.get('COOKIE', {}))
 
     def init_mongodb(self):
         init_indexes(self.app.mongo.db, u'tokens', MONGO_INDEXES)
@@ -178,9 +180,11 @@ class Tokens(object):
 
     @staticmethod
     def get_user_agent(request):
+        """获取用户User-Agent"""
         return request.headers.get('User-Agent')
 
-    def convert_user_to_records(self, user, roles, groups, request, now):
+    def convert_ldap_user_to_records(self, user, roles, groups, request, now):
+        """将LDAP用户转换为Python dict对象"""
         claims = {
             u'account': unicode(user.name),
             u'uid': user.id,
@@ -188,7 +192,9 @@ class Tokens(object):
             u'alias': user.sn,
             u'roles': roles,
             u'groups': groups,
-            u'exp': now + self.expired
+            u'exp': now + self.expired,
+            u'iat': now,
+            u'jti': self.generate_unique_token_id()
         }
         saved = copy.deepcopy(claims)
         saved.update({
@@ -198,18 +204,23 @@ class Tokens(object):
         return claims, saved
 
     def encrypt(self, claims):
+        """加密JWT"""
         token = jwt.JWT(header=self.jwt_sign_header, claims=claims)
         token.make_signed_token(self.key)
-        etoken = jwt.JWT(header=self.jwt_encrypt_header, claims=token.serialize())
-        etoken.make_encrypted_token(self.key)
-        return etoken.serialize()
+        # etoken = jwt.JWT(header=self.jwt_encrypt_header, claims=token.serialize())
+        # etoken.make_encrypted_token(self.key)
+        # return etoken.serialize()
+        return token.serialize()
 
     def decrypt(self, encrpyted):
+        """解密JWT"""
         et = jwt.JWT(key=self.key, jwt=encrpyted)
-        st = jwt.JWT(key=self.key, jwt=et.claims)
-        return st.claims
+        # st = jwt.JWT(key=self.key, jwt=et.claims)
+        # return st.claims
+        return et.claims
 
     def make_response(self, user, request):
+        """将用户放入响应"""
         roles = []
         for role_name in user.roles:
             role = self.app.rbac.roles.find_one(role_name)
@@ -217,11 +228,14 @@ class Tokens(object):
         groups = []
         now = timestamp()
         session_id, token_id = self.generate_unique_token_id()
-        claims, saved = self.convert_user_to_records(user, roles, groups, request, now)
+        claims, saved = self.convert_ldap_user_to_records(user, roles, groups, request, now)
         refresh_token = random_string(32)
         refresh_claims = {u'refresh': refresh_token, u'exp': now + self.refresh_expired}
         saved.update(refresh_claims)
-        self.app.cache.set(TOKEN_CACHE_PREFIX + session_id, saved, timeout=self.expired)
+        self.app.cache.set(
+            TOKEN_CACHE_PREFIX + session_id,
+            json.dumps(saved, encoding='utf-8', ensure_ascii=True),
+            timeout=self.expired)
         saved.update({u'_id': token_id})
         saved.update({u'sid': session_id})
         self.app.mongo.db.tokens.insert(saved)
@@ -231,7 +245,8 @@ class Tokens(object):
             u'RefreshToken': self.encrypt(refresh_claims)
         })
         salt = random_string(16)
-        resp.set_cookie('SID', value=session_id, secure=True, domain='localhost', path='/')
+        hashed = self.encrypt({'s': session_id + salt})[:-24]
+        resp.set_cookie('SID', value=session_id + salt + hashed, **self.cookie_config)
         return resp
 
     def authenticate(self, username, password, request):
@@ -240,23 +255,32 @@ class Tokens(object):
         return self.make_response(user, request)
 
     def check_saved_user_and_request(self, saved, request):
+        """通过User-Agent和访问IP来校验令牌是否被他人利用"""
         if saved[u'user_agent'] != self.get_user_agent(request):
             return False
         if saved[u'remote_addr'] != self.get_remote_address(request):
             return False
         return True
 
-    def get_session_id(self, request):
+    def get_and_check_session_id(self, request):
+        """将Cookie中Session_id取出并简单校验"""
         if 'SID' not in request.cookies:
             return None
-        return self.decrypt(request.cookies.get('SID')).get('n')
+        sid = request.cookies.get('SID')
+        session_id = sid[:-40]
+        salt = sid[-40:-24]
+        if sid[-24:] == self.encrypt({'s': session_id + salt})[:-24]:
+            return session_id
+        else:
+            return None
 
     def load_user_from_request(self, request):
+        """根据请求获取用户"""
         try:
-            session_id = self.get_session_id(request)
+            session_id = self.get_and_check_session_id(request)
             if session_id is None:
                 return None
-            saved = self.app.cache.get(TOKEN_CACHE_PREFIX + session_id)
+            saved = json.loads(self.app.cache.get(TOKEN_CACHE_PREFIX + session_id), encoding='utf-8')
             if saved is None:
                 return None
             if not self.check_saved_user_and_request(saved, request):
@@ -267,11 +291,12 @@ class Tokens(object):
             return None
 
     def refresh_token(self, request, refresh_token):
+        """刷新令牌"""
         refresh_claims = self.decrypt(refresh_token)
         now = timestamp()
         if now > refresh_claims[u'exp']:
             return None
-        session_id = self.get_session_id(request)
+        session_id = self.get_and_check_session_id(request)
         if session_id is None:
             return None
         saved = self.app.mongo.db.tokens.find_one({u'sid', session_id})
