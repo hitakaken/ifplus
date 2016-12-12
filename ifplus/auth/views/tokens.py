@@ -12,8 +12,8 @@ ns = Namespace('auth',
 
 # 验证 Form
 authenticate_request = ns.parser()
-authenticate_request.add_argument('username', required=True, location='form')
-authenticate_request.add_argument('password', required=True, location='form')
+authenticate_request.add_argument('username', location='args')
+authenticate_request.add_argument('password',  location='args')
 # 令牌 请求
 token_request = ns.parser()
 token_request.add_argument('refresh_token', location='form')
@@ -27,9 +27,9 @@ token_response = ns.model('Token', {
 @ns.route('/authenticate')
 class Authenticate(Resource):
     @ns.expect(authenticate_request)
-    @ns.marshal_with(token_response)
+    # @ns.marshal_with(token_response)
     @ns.doc(id='authenticate')
-    def post(self):
+    def get(self):
         """
         Authenticate
 
@@ -43,7 +43,7 @@ class Authenticate(Resource):
 @ns.route('/refresh')
 class RefreshToken(Resource):
     @ns.expect(token_request)
-    @ns.marshal_with(token_response)
+    # @ns.marshal_with(token_response)
     @ns.doc(id='refresh_token')
     def post(self):
         """
@@ -53,3 +53,5 @@ class RefreshToken(Resource):
         """
         args = token_request.parse_args()
         return app.tokens.refresh_token(request, args['refresh_token'])
+
+

@@ -32,14 +32,9 @@ LDAP = {
 }
 
 TOKEN = {
-    'JWK': {
-        "crv":"P-256",
-        "kty":"EC",
-        "x":"wBxqTBBjXrueERcRKdWone2vW9quAU6YsVpTNE2Vwh0",
-        "y":"zGwNTDXwSQUZK9Qkniy8AKEunyPVcsdJJiM3g3Wrp8k"
-    },
+    'JWK': {"k":"KJexnbVD4LJoxpLJlq4lNFF2Jr8Cgm4E5iYiOJiWm5E","kty":"oct"},
     'JWT_SIGN': {'alg': 'HS256'},
-    'JWT_ENCRYPT': {'alg': 'A256KW', 'enc': 'A256CC'},
+    'JWT_ENCRYPT': {'alg': 'A256KW', 'enc': 'A256CBC-HS512'},
     'EXPIRED': 3600,
     'REFRESH_EXPIRED': 36000,
     'HASHIDS_SALT': 'hashids.chinaconsult.com',

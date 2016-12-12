@@ -15,4 +15,4 @@ server = Application(app=app)
 #     app.fs.start()
 
 if __name__ == '__main__':
-    server.run(app, host='0.0.0.0', port=5000, debug=True)
+    server.run(app, host='0.0.0.0', port=80, debug=True)

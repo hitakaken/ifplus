@@ -2,6 +2,7 @@ flask
 six
 python-ldap
 # PyJWT
+cryptography
 JWCrypto
 hashids
 msgpack-python

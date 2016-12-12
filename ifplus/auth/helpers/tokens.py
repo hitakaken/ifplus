@@ -8,6 +8,7 @@ from bson import ObjectId
 from flask import jsonify
 from hashids import Hashids
 from jwcrypto import jwt, jwk
+print jwk.JWK(generate='oct', size=512).export()
 from pymongo import IndexModel, ASCENDING, DESCENDING
 from werkzeug.exceptions import NotFound
 from ..models.token import TokenUser
@@ -150,7 +151,7 @@ class Tokens(object):
         expkey = config.get('JWK', {'generate': 'oct', 'size': 256})
         self.key = jwk.JWK(**expkey)
         self.jwt_sign_header = config.get('JWT_SIGN', {'alg': 'HS256'})
-        self.jwt_encrypt_header = config.get('JWT_ENCRYPT', {'alg': 'A256KW', 'enc': 'A256CC'})
+        self.jwt_encrypt_header = config.get('JWT_ENCRYPT', {'alg': 'A256KW', 'enc': 'A256CBC-HS512'})
         self.expired = config.get('EXPIRED', 3600)
         self.refresh_expired = config.get('REFRESH_EXPIRED', 36000)
         self.hashids = Hashids(salt=config.get('HASHIDS_SALT', 'hashids salt'))
@@ -224,12 +225,13 @@ class Tokens(object):
         saved.update({u'_id': token_id})
         saved.update({u'sid': session_id})
         self.app.mongo.db.tokens.insert(saved)
+        print self.encrypt(claims)
         resp = jsonify({
             u'AuthToken': self.encrypt(claims),
             u'RefreshToken': self.encrypt(refresh_claims)
         })
         salt = random_string(16)
-        resp.set_cookie('SID', value=self.encrypt({'n': session_id, 's': salt}), secure=True)
+        resp.set_cookie('SID', value=session_id, secure=True, domain='localhost', path='/')
         return resp
 
     def authenticate(self, username, password, request):
