@@ -63,6 +63,7 @@ class Files(Resource):
     # @ns.response(code=404, model=models.errno, description='文件/文件夹不存在')
     def get(self, file_path):
         kwargs = {u'user': current_user}
+        print current_user
         kwargs.update(requests.read.parse_args())
         return app.vfs.read(file_path, **kwargs)
 

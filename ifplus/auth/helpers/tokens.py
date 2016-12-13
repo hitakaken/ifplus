@@ -243,10 +243,15 @@ class Tokens(object):
             u'AuthToken': self.encrypt(claims),
             u'RefreshToken': self.encrypt(refresh_claims)
         })
-        salt = random_string(16)
-        hashed = self.encrypt({'s': session_id + salt})[:-24]
-        print self.cookie_config
+        salt = random_string(24)
+        hashed = self.encrypt({'s': session_id + salt})[-16:]
         resp.set_cookie('SID', value=session_id + salt + hashed, **self.cookie_config)
+        resp.headers['Access-Control-Allow-Origin'] = "*"
+        resp.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] =\
+            'Cookie, Content-Type, Authorization, Content-Length, X-Requested-With'
+        resp.headers['Access-Control-Expose-Headers'] =  'Set-Cookie, X-Powered-By'
+        resp.headers['Access-Control-Allow-Credentials'] = 'true'
         return resp
 
     def authenticate(self, username, password, request):
@@ -264,12 +269,13 @@ class Tokens(object):
 
     def get_and_check_session_id(self, request):
         """将Cookie中Session_id取出并简单校验"""
+        print request.cookies
         if 'SID' not in request.cookies:
             return None
         sid = request.cookies.get('SID')
         session_id = sid[:-40]
-        salt = sid[-40:-24]
-        if sid[-24:] == self.encrypt({'s': session_id + salt})[:-24]:
+        salt = sid[-40:-16]
+        if sid[-16:] == self.encrypt({'s': session_id + salt})[-16:]:
             return session_id
         else:
             return None
@@ -278,9 +284,11 @@ class Tokens(object):
         """根据请求获取用户"""
         try:
             session_id = self.get_and_check_session_id(request)
+            print session_id
             if session_id is None:
                 return None
             saved = json.loads(self.app.cache.get(TOKEN_CACHE_PREFIX + session_id), encoding='utf-8')
+            print saved
             if saved is None:
                 return None
             if not self.check_saved_user_and_request(saved, request):

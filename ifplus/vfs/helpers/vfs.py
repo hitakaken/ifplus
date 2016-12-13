@@ -60,6 +60,25 @@ class VirtualFileSystem(object):
     #     device = device if device is not None else self.device_of(file_path)
     #     return os.path.relpath(file_path, device.root)
 
+    def _lookup_by_id(self, fid, current_path=None):
+        underlying = self.mongo.db.files.find_one({u'_id': fid})
+        if underlying is None:
+            return None
+        file_object = FileObject(current_path, underlying, vfs=self)
+        if not file_object.is_link:
+            return file_object
+        else:
+            return file_object, self._lookup_by_link(file_object, current_path=current_path)
+
+    def _lookup_by_link(self, symlink, current_path=None):
+        if symlink.is_link:
+            file_object = self._lookup_by_id(symlink.symlink[u'id'], current_path=current_path)
+            if not file_object.is_link:
+                return file_object
+            else:
+                return file_object, self._lookup_by_link(file_object, current_path=current_path)
+        return None
+
     def _lookup_by_parent_and_name(self, parent, name, current_path=None):
         underlying = self.mongo.db.files.find_one({u'parent': parent.file_id, u'name': name})
         if underlying is None:
@@ -68,8 +87,7 @@ class VirtualFileSystem(object):
         if not file_object.is_link:
             return file_object
         else:
-            symlink = self._lookup_by_file_path(file_object.symlink, current_path)
-            return file_object, symlink
+            return file_object, self._lookup_by_link(file_object, current_path=current_path)
 
     def _lookup_by_file_path(self, file_path, current_path=None):
         partnames = filter(bool, file_path.split(u'/'))
@@ -80,8 +98,7 @@ class VirtualFileSystem(object):
         if not file_object.is_link:
             return file_object
         else:
-            symlink = self._lookup_by_file_path(file_object.symlink, current_path)
-            return file_object, symlink
+            return file_object, self._lookup_by_link(file_object, current_path=current_path)
 
     def resolve_file_path(self, file_path, **kwargs):
         if file_path.startswith(u'~/'):
@@ -119,6 +136,7 @@ class VirtualFileSystem(object):
         if op not in CREATE_OPS:
             raise FuseOSError(EROFS)
         parts = self.resolve_file_path(file_path, **kwargs)
+        print parts
         if op == u'mkdir':
             pass
         elif op == u'mkdirs':

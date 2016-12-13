@@ -13,7 +13,10 @@ class FileSymlink(FileAcls):
         """初始化软链接"""
         self.underlying[u'mode'] &= 0x80000000 | 0o007777
         self.underlying[u'mode'] |= 0o120000
-        self.underlying[u'symlink'] = target
+        self.underlying[u'symlink'] = {
+            u'id': target.file_id,
+            u'path': target.real_path
+        }
         return self
 
     @property
@@ -53,3 +56,12 @@ class FileSymlink(FileAcls):
         self.result = self.get_symlink(result=self.result)
         return self
 
+    @property
+    def refs(self):
+        return self.underlying.get(u'refs', [])
+
+    def add_ref(self):
+        pass
+
+    def remove_ref(self):
+        pass
