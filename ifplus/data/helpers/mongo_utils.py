@@ -5,9 +5,10 @@ def init_collection(db, collection_name):
         db.create_collection(collection_name)
     return db[collection_name]
 
+
 def init_indexes(db, collection_name, mongo_indexes):
     collection = init_collection(db, collection_name)
-    indexes = collection.index_information
+    indexes = collection.index_information()
     indexes_to_create = []
     for mongo_index in mongo_indexes:
         if mongo_index.document[u'name'] not in indexes:

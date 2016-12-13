@@ -24,10 +24,10 @@ class Application(object):
             self.init_app(app, **kwargs)
 
     def init_app(self, app, **kwargs):
-        self.rest = Rest(app, **kwargs)
-        self.mongo = PyMongo(app)
+        self.rest = Rest(app=app, **kwargs)
+        self.mongo = PyMongo(app=app)
         setattr(app, 'mongo', self.mongo)
-        self.redis = FlaskRedis(app)
+        self.redis = FlaskRedis(app=app)
         setattr(app, 'redis', self.redis)
         self.cache = Cache(app, config=app.config['CACHE'])
         setattr(app, 'cache', self.cache)

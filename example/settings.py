@@ -9,7 +9,7 @@ REDIS_URL = 'redis://' + SERVER_IP + ':6379/0'
 
 CACHE = {
     'CACHE_TYPE': 'redis',
-    'CACHE_KEY_PREFIX': 'ifplus',
+    'CACHE_KEY_PREFIX': 'ifplus:',
     'CACHE_REDIS_HOST': SERVER_IP,
     'CACHE_REDIS_PORT': '6379',
     'CACHE_REDIS_URL': 'redis://' + SERVER_IP + ':6379'
@@ -41,7 +41,7 @@ TOKEN = {
     'TRUST_PROXIES': {'127.0.0.1'},
     'SUPERS': set(),
     'COOKIE': {
-        'DOMAIN': 'localhost',
+        'DOMAIN': 'dev.localhost',
         'SECURE': True,
         'PATH': '/',
         # 'EXPIRES': 'Sat, 10 Dec 2016 23:38:25 GMT'
@@ -52,22 +52,15 @@ JWT = {
     'algorithm': 'HS256'
 }
 
-IFPLUS_DEVICES = {
-    u'/': {
-        'dtype': 0,
-        'did': None,
-        'root': u'/',
-        'owner': u'root',
-        'group': None,
-        'mode': 0o040750,
-        'acl': []
+VFS = {
+    'RID': '0000-0000-0000-0000',
+    'ROOT': {
+        u'uid': u'u:d63cadb9-ae64-47d0-bdd1-13331c064e9f',
+        u'gid': u'r:428189bc-c6d3-451d-b9f7-a6228c8a1c57'
     },
-    u'/home': {
-        'dtype': 1,
-        'root': '/',
-        'owner': u'root',
-        'group': None,
-        'mode': 0o040750,
-        'acl': []
+    'DEVICES': {
+        '/home': {'type': 'nfs'},
+        '/www': {'type': 'local'},
+        '/projects': {'type': 'nfs'}
     }
 }

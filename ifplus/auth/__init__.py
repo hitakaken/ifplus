@@ -16,7 +16,6 @@ class Authenticator(object):
         self.app = app
         # LDAP 定义
         self.tokens = Tokens(app)
-        self.tokens.init_mongodb()
         self.login_manager = LoginManager(app=app)
         self.login_manager.request_loader(self.tokens.load_user_from_request)
         app.api.add_namespace(ns)

@@ -11,23 +11,27 @@ ns = Namespace('auth',
                tags='tokens')
 
 # 验证 Form
-authenticate_request = ns.parser()
-authenticate_request.add_argument('username', required=True, location=['args','form'])
-authenticate_request.add_argument('password', required=True, location=['args','form'])
+authenticate_get_request = ns.parser()
+authenticate_get_request.add_argument('username', required=True, location='args')
+authenticate_get_request.add_argument('password', required=True, location='args')
+authenticate_post_request = ns.parser()
+authenticate_post_request.add_argument('username', required=True, location='form')
+authenticate_post_request.add_argument('password', required=True, location='form')
 # 令牌 请求
 token_request = ns.parser()
 token_request.add_argument('refresh_token', location='form')
 # 令牌 响应
-token_response = ns.model('Token', {
-    'AuthToken': fields.String(title='令牌'),
-    'RefreshToken': fields.String(title='更新令牌')
+token_response = ns.model(name=u'Tokens', model={
+    u'AuthToken': fields.String(title=u'令牌'),
+    u'RefreshToken': fields.String(title=u'更新令牌')
 })
 
 
 @ns.route('/authenticate')
 class Authenticate(Resource):
-    @ns.expect(authenticate_request)
-    @ns.doc(id='authenticate',responses={'200': {'description': '用户认证成功', '$ref': '#/definitions/Token'}})
+    @ns.expect(authenticate_get_request)
+    # @ns.doc(id='authenticate')
+    @ns.response(code=200, description=u'用户登录成功', model=token_response)
     def get(self):
         """
         Authenticate
@@ -35,11 +39,12 @@ class Authenticate(Resource):
         :raises NotFound:  User not found
         :raises Unauthorized:  Authenticate Failed
         """
-        args = authenticate_request.parse_args()
+        args = authenticate_get_request.parse_args()
         return app.tokens.authenticate(args['username'], args['password'], request)
 
-    @ns.expect(authenticate_request)
-    @ns.doc(id='authenticate',responses={'200': {'description': '用户认证成功', '$ref': '#/definitions/Token'}})
+    @ns.expect(authenticate_post_request)
+    @ns.doc(id='authenticate')
+    @ns.response(code=200, description=u'用户登录成功', model=token_response)
     def post(self):
         """
         Authenticate
@@ -47,7 +52,7 @@ class Authenticate(Resource):
         :raises NotFound:  User not found
         :raises Unauthorized:  Authenticate Failed
         """
-        args = authenticate_request.parse_args()
+        args = authenticate_post_request.parse_args()
         return app.tokens.authenticate(args['username'], args['password'], request)
 
 

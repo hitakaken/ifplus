@@ -1,25 +1,14 @@
 # -*- coding: utf-8 -*-
 from abc import ABCMeta, abstractmethod
 from errno import *
-from os import strerror
+
 from stat import S_ISDIR
 from werkzeug.datastructures import FileStorage
 
 from ifplus.restful.patched import fields
 
 
-class FuseOSError(OSError):
-    """FUSE 异常"""
-    def __init__(self, errno, http_status=500):
-        super(FuseOSError, self).__init__(errno, strerror(errno))
-        self.http_status = http_status
 
-    @classmethod
-    def model(cls, ns):
-        return ns.model('Errno', {
-            'errno': fields.Integer(description='错误码', required=True),
-            'message': fields.String(description='错误信息')
-        })
 
 
 class Operations(object):

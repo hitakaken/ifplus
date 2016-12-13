@@ -9,7 +9,7 @@ from bson import ObjectId
 from flask import jsonify
 from hashids import Hashids
 from jwcrypto import jwt, jwk
-print jwk.JWK(generate='oct', size=512).export()
+# print jwk.JWK(generate='oct', size=512).export()
 from pymongo import IndexModel, ASCENDING, DESCENDING
 from werkzeug.exceptions import NotFound
 from ..models.token import TokenUser
@@ -148,7 +148,7 @@ class Tokens(object):
     def __init__(self, app):
         """初始化工具集，根据配置设置各种工具"""
         self.app = app
-        config = app.config.get('Token', {})
+        config = app.config.get('TOKEN', {})
         expkey = config.get('JWK', {'generate': 'oct', 'size': 256})
         self.key = jwk.JWK(**expkey)
         self.jwt_sign_header = config.get('JWT_SIGN', {'alg': 'HS256'})
@@ -158,7 +158,7 @@ class Tokens(object):
         self.hashids = Hashids(salt=config.get('HASHIDS_SALT', 'hashids salt'))
         self.trusted_proxies = config.get('TRUST_PROXIES', set())
         self.supers = config.get('SUPERS', set())
-        self.cookie_config = dict((k.lower, v) for (k,v) in config.get('COOKIE', {}))
+        self.cookie_config = dict((k.lower(), v) for (k, v) in config.get('COOKIE', {}).items())
 
     def init_mongodb(self):
         init_indexes(self.app.mongo.db, u'tokens', MONGO_INDEXES)
@@ -194,7 +194,7 @@ class Tokens(object):
             u'groups': groups,
             u'exp': now + self.expired,
             u'iat': now,
-            u'jti': self.generate_unique_token_id()
+            u'jti': self.generate_unique_token_id()[0]
         }
         saved = copy.deepcopy(claims)
         saved.update({
@@ -239,13 +239,13 @@ class Tokens(object):
         saved.update({u'_id': token_id})
         saved.update({u'sid': session_id})
         self.app.mongo.db.tokens.insert(saved)
-        print self.encrypt(claims)
         resp = jsonify({
             u'AuthToken': self.encrypt(claims),
             u'RefreshToken': self.encrypt(refresh_claims)
         })
         salt = random_string(16)
         hashed = self.encrypt({'s': session_id + salt})[:-24]
+        print self.cookie_config
         resp.set_cookie('SID', value=session_id + salt + hashed, **self.cookie_config)
         return resp
 

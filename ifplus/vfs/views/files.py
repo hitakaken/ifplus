@@ -3,11 +3,12 @@ import re
 import urllib
 from errno import *
 from flask import current_app as app, Blueprint
-from flask_login import current_user
+from flask_login import current_user, login_required
 from ifplus.restful.patched import Namespace, Resource
 from ifplus.restful.datatypes import BOOLEAN_VALUE
 # from ifplus.auth.models.token import UserToken
-from ..base.operations import Operations, FuseOSError
+from ..models.exceptions import FuseOSError
+from ..models.actions.rests import Models, Requests, Responses
 from ..models.file import *
 
 ns = Namespace('fs',
@@ -16,12 +17,13 @@ ns = Namespace('fs',
                description='文件管理 RESTful API',
                tags='files')
 
-# 错误 Schema
-errno_model = FuseOSError.model(ns)
+models = Models(ns)
+requests = Requests(ns, models)
+responses = Responses(ns, models)
 
 
 @ns.errorhandler(FuseOSError)
-@ns.marshal_with(errno_model, code=500, description='文件系统错误')
+@ns.marshal_with(models.errno, code=500, description='文件系统错误')
 def handle_fuse_os_error(error):
     """File System Responses With Errno code"""
     resp = {
@@ -46,22 +48,50 @@ def handle_fuse_os_error(error):
 # mode_pattern = re.compile('^[0-7]{3}$')
 
 
-@ns.route('/<path:file_path>')
-class FileActions(Resource):
-    @ns.doc(id='get_file', produces=['application/json', 'application/octet-stream'])
-    def get(self, file_path):
-        pass
-
-    @ns.doc(id='update_file')
+@ns.route('/files/<path:file_path>')
+class Files(Resource):
+    @ns.doc(id='create')
+    @ns.expect(requests.create, requests.update_model)
+    @login_required
     def post(self, file_path):
-        pass
+        kwargs = {u'user': current_user}
+        kwargs.update(requests.create.parse_args())
+        return app.vfs.create(file_path, **kwargs)
 
-    @ns.doc(id='create_file')
+    @ns.doc(id='read', produces=['application/json', 'application/octet-stream'])
+    @ns.expect(requests.read)
+    # @ns.response(code=404, model=models.errno, description='文件/文件夹不存在')
+    def get(self, file_path):
+        kwargs = {u'user': current_user}
+        kwargs.update(requests.read.parse_args())
+        return app.vfs.read(file_path, **kwargs)
+
+    @ns.doc(id='update')
+    @ns.expect(requests.update, requests.update_model)
+    @login_required
     def put(self, file_path):
-        pass
+        kwargs = {u'user': current_user}
+        kwargs.update(requests.update.parse_args())
+        return app.vfs.update(file_path, **kwargs)
 
-    def delete(self, filepath):
-        pass
+    @ns.doc(id='delete')
+    @ns.expect(requests.delete)
+    @login_required
+    def delete(self, file_path):
+        kwargs = {u'user': current_user}
+        kwargs.update(requests.delete.parse_args())
+        return app.vfs.delete(file_path, **kwargs)
+
+
+@ns.route('/upload/<path:file_path>')
+class Upload(Resource):
+    @ns.doc(id='upload')
+    @ns.expect(requests.upload)
+    @login_required
+    def post(self, file_path):
+        kwargs = {u'user': current_user}
+        kwargs.update(requests.upload.parse_args())
+        return app.vfs.upload(file_path, **kwargs)
 
 
 # # 通用处理

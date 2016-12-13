@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 class Operations(object):
     def destroy(self):
         pass
@@ -126,3 +127,12 @@ class Operations(object):
 
     def flush(self):
         pass
+
+
+class RootDevice(Operations):
+    def __init__(self, rid, vfs=None):
+        self.id = rid
+        self.vfs = vfs
+
+    def init_vfs(self, vfs):
+        self.vfs = vfs
