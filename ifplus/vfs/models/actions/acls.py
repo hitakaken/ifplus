@@ -27,6 +27,11 @@ def record_old(old_aces, changes):
     return changes
 
 
+def convert_permission_binary_to_array(mask):
+    array = [int(m) for m in bin(mask)[10:]]
+    return [[array[x], array[x + 8], array[x + 16]] for x in range(0, 8)]
+
+
 def check_changes(changes, grant):
     change_mask = 0x00
     for (sid, ace) in changes.items():
@@ -43,6 +48,7 @@ def check_changes(changes, grant):
 
 class FileAcls(FileINode):
     """文件权限工具类"""
+
     def __init__(self, underlying, vfs=None):
         super(FileAcls, self).__init__(underlying, vfs=vfs)
 
@@ -151,7 +157,7 @@ class FileAcls(FileINode):
         allow, deny, grant = self.user_perms(user=user, perms=perms)
         return grant & 0xFF > 0
 
-    def user_perms(self, user=None, perms=None ):
+    def user_perms(self, user=None, perms=None):
         return self.perms(user=user) if perms is None else perms
 
     def perms(self, user=None):
@@ -160,7 +166,7 @@ class FileAcls(FileINode):
         deny = 0x00
         grant = 0x00
         if user is not None and not user.is_anonymous and user.is_admin:
-            return  0xFF, 0x00, 0xFF
+            return 0xFF, 0x00, 0xFF
         if self.is_owner(user=user):
             grant |= 0xFF
             allow |= self.mode & 0o700 >> 1
@@ -188,7 +194,11 @@ class FileAcls(FileINode):
         if result is None:
             result = {}
         result.update({
-            u'acl': [{u'sid': ace[u'sid'], u'mask': [int(m) for m in bin(ace[u'mask'])[8:]]}
+            u'acl': [{
+                         u'sid': ace[u'sid'],
+                         u'perms': convert_permission_binary_to_array(ace[u'mask']),
+                         u'inherit': 1 if ace[u'mask'] & 0x01000000 > 0 else 0
+                     }
                      for ace in self.acl]})
         return result
 
@@ -197,7 +207,7 @@ class FileAcls(FileINode):
         if result is None:
             result = {}
         result.update({
-            u'perms': [int(m) for m in bin(self.perms_mask(user=user))[10:]]
+            u'perms': convert_permission_binary_to_array(self.perms_mask(user=user))
         })
         return result
 
@@ -210,4 +220,3 @@ class FileAcls(FileINode):
         """记录用户权限到临时结果"""
         self.result = self.get_perms(result=self.result, user=user)
         return self
-

@@ -18,10 +18,10 @@ FILE_INODE = {
 }
 
 FILE_PERMISSIONS = {
-    u'perm': fields.List(
-        fields.Integer,
+    u'perms': fields.List(
+        fields.List(fields.Integer, min_items=3, max_items=3),
         title=u'用户权限',
-        required=True, min_items=24, max_items=24)
+        required=True, min_items=8, max_items=8)
 }
 
 FILE_ACE = {
@@ -29,11 +29,8 @@ FILE_ACE = {
         title=u'用户SID',
         description=u'ACL条目用户SID，SID由用户对象类型和用户对象ID组合而成，形如[u|g|r]:<UUID>，不能为空',
         required=True),
-    u'mask': fields.List(
-        fields.Integer,
-        title=u'用户权限',
-        description=u'',
-        required=True, min_items=26, max_items=26)
+    u'perms': FILE_PERMISSIONS[u'perms'],
+    u'inherit': fields.Integer(title=u'可继承', description=u'0 代表不可继承, 1 代表可继承'),
 }
 
 FILE_HITS = {

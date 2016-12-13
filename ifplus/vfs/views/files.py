@@ -46,13 +46,21 @@ def handle_fuse_os_error(error):
 # mode_pattern = re.compile('^[0-7]{3}$')
 
 
-class FolderActions(Resource):
+@ns.route('/<path:file_path>')
+class FileActions(Resource):
+    @ns.doc(id='get_file', produces=['application/json', 'application/octet-stream'])
     def get(self, file_path):
         pass
 
+    @ns.doc(id='update_file')
+    def post(self, file_path):
+        pass
 
-class FileActions(Resource):
-    def get(self, file_path):
+    @ns.doc(id='create_file')
+    def put(self, file_path):
+        pass
+
+    def delete(self, filepath):
         pass
 
 
