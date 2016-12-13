@@ -41,7 +41,7 @@ TOKEN = {
     'TRUST_PROXIES': {'127.0.0.1'},
     'SUPERS': set(),
     'COOKIE': {
-        'DOMAIN': 'dev.localhost',
+        'DOMAIN': 'dev.localhost.com',
         'SECURE': True,
         'PATH': '/',
         # 'EXPIRES': 'Sat, 10 Dec 2016 23:38:25 GMT'
