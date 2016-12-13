@@ -10,7 +10,7 @@ from werkzeug import exceptions as http_exceptions
 # from werkzeug.utils import cached_property
 
 from ._http import HTTPStatus
-from .model import Model, DefaultHTTPErrorSchema
+from .model import Model, DefaultHTTPErrorSchema, OriginalModel
 
 
 class Namespace(OriginalNamespace):
@@ -170,7 +170,7 @@ class Namespace(OriginalNamespace):
             if code in ALLOWED_EMPTY_BODY_STATUSES:
                 api_model = None
             else:
-                if isinstance(model, Model):
+                if isinstance(model, Model) or isinstance(model, OriginalModel):
                     api_model = model
                 else:
                     api_model = self.model(model=model)
