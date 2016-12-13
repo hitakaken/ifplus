@@ -52,10 +52,10 @@ class FileAcls(FileINode):
     def __init__(self, underlying, vfs=None):
         super(FileAcls, self).__init__(underlying, vfs=vfs)
 
-    def init_acl(self):
+    def init_acl(self, inherit=None):
         """初始化文件ACL权限属性"""
         if u'acl' not in self.underlying:
-            self.underlying[u'acl'] = []
+            self.underlying[u'acl'] = inherit if inherit is not None else []
         return self
 
     @property

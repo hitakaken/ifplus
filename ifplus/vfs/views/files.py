@@ -56,6 +56,7 @@ class Files(Resource):
     def post(self, file_path):
         kwargs = {u'user': current_user}
         kwargs.update(requests.create.parse_args())
+        kwargs.update({u'payload': app.api.payload})
         return app.vfs.create(file_path, **kwargs)
 
     @ns.doc(id='read', produces=['application/json', 'application/octet-stream'])
@@ -73,6 +74,7 @@ class Files(Resource):
     def put(self, file_path):
         kwargs = {u'user': current_user}
         kwargs.update(requests.update.parse_args())
+        kwargs.update({u'payload': app.api.payload})
         return app.vfs.update(file_path, **kwargs)
 
     @ns.doc(id='delete')
@@ -81,6 +83,7 @@ class Files(Resource):
     def delete(self, file_path):
         kwargs = {u'user': current_user}
         kwargs.update(requests.delete.parse_args())
+        kwargs.update({u'payload': app.api.payload})
         return app.vfs.delete(file_path, **kwargs)
 
 

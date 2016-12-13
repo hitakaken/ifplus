@@ -17,7 +17,7 @@ class Application(object):
         self.cache = None
         self.rbac = None
         self.auth = None
-        self.res = None
+        self.vfs = None
         self.pm = None
         self.chats = None
         if app is not None:
@@ -27,15 +27,14 @@ class Application(object):
         self.rest = Rest(app=app, **kwargs)
         self.mongo = PyMongo(app=app)
         setattr(app, 'mongo', self.mongo)
-        self.redis = FlaskRedis(app=app)
-        setattr(app, 'redis', self.redis)
+        # self.redis = FlaskRedis(app=app)
+        # setattr(app, 'redis', self.redis)
         self.cache = Cache(app, config=app.config['CACHE'])
         setattr(app, 'cache', self.cache)
         self.rbac = RBAC(app=app, **kwargs)
         self.auth = Authenticator(app=app, **kwargs)
-        self.res = VFS(app=app,  mongo=self.mongo, **kwargs)
+        self.vfs = VFS(app=app,  mongo=self.mongo, **kwargs)
         self.chats = ChatServer(app=app, **kwargs)
-
         self.rest.register()
         # print '注册 REST API'
         self.chats.register()

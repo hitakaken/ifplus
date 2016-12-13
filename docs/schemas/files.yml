@@ -38,7 +38,7 @@ definitions:
         format: int32
         type: 权限掩码
         description: 由占位码 0x80000000 | 八进制权限掩码 0o177777 组成,
-        前2位八进制码代表文件类型，04代表文件夹，10代表文件
+        前2位八进制码代表文件类型，04代表文件夹，10代表文件，12代表链接
         后3位八进制码分别代表owner, group, other的权限，八进制码每位bit分别代表read、write、excute权限
         在检索时采用mongo的 $bitAllSet 方法加速检索
       creator:

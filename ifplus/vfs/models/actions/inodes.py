@@ -28,7 +28,24 @@ class FileINode(BaseFileNode):
         """初始化文件INode属性"""
         if u'name' not in self.underlying:
             self.underlying[u'name'] = name
-
+        if u'mtime' not in self.underlying:
+            self.underlying[u'mtime'] = times
+        if u'ctime' not in self.underlying:
+            self.underlying[u'ctime'] = times
+        if u'atime' not in self.underlying:
+            self.underlying[u'atime'] = times
+        if u'create' not in self.underlying:
+            self.underlying[u'create'] = times
+        if u'creator' not in self.underlying and user is not None:
+            self.underlying[u'creator'] = user.sid
+        if u'uid' not in self.underlying and user is not None:
+            self.underlying[u'uid'] = user.sid
+        if u'gid' not in self.underlying and user is not None:
+            self.underlying[u'gid'] = user.sid
+        if u'nlink' not in self.underlying:
+            self.underlying[u'nlink'] = 1
+        if u'size' not in self.underlying:
+            self.underlying[u'size'] = 0
         return self
 
     @property
@@ -104,15 +121,34 @@ class FileINode(BaseFileNode):
         """文件所有组"""
         return self.underlying[u'gid']
 
+    @gid.setter
+    def gid(self, gid):
+        """设置文件所有者"""
+        if self.gid != gid:
+            self.underlying[u'gid'] = gid
+            self.changes[u'inodes'].add(u'gid')
+
     @property
     def group(self):
         """文件所有组"""
         return self.gid
 
+    @group.setter
+    def group(self, group):
+        """设置文件所有者"""
+        self.gid = group
+
     @property
     def mode(self):
         """文件权限掩码"""
         return self.underlying[u'mode']
+
+    @mode.setter
+    def mode(self, mode):
+        if self.gid != mode:
+            """文件权限掩码"""
+            self.underlying[u'mode'] = mode
+            self.changes[u'inodes'].add(u'mode')
 
     @property
     def is_file(self):

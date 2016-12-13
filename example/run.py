@@ -15,4 +15,4 @@ def start():
     app.tokens.init_mongodb()
 
 if __name__ == '__main__':
-    server.run(app, host='0.0.0.0', port=80, debug=True)
+    app.run(host='0.0.0.0', port=80, debug=True)

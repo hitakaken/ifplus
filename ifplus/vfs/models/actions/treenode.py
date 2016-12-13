@@ -9,9 +9,9 @@ class FileTreeNode(FileSymlink):
 
     def init_tree(self, parent=None, ancestors=None):
         """初始化文件树"""
-        if self.underlying[u'parent'] is None:
+        if u'parent'not in self.underlying:
             self.underlying[u'parent'] = parent
-        if self.underlying[u'ancestors'] is None:
+        if u'ancestors' not in self.underlying:
             if ancestors is None:
                 if parent is None:
                     ancestors = []

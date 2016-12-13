@@ -12,6 +12,23 @@ class Models(object):
             u'errno': fields.Integer(title=u'错误码', description=u'错误码', required=True),
             u'message': fields.String(title=u'错误信息', description=u'错误信息')
         })
+        self.ace = ns.model(u'FileACLEntry', {
+            u'sid': fields.String(
+                title=u'用户SID',
+                description=u'ACL条目用户SID，SID由用户对象类型和用户对象ID组合而成，形如[u|g|r]:<UUID>，不能为空',
+                required=True),
+            u'perms': fields.List(
+                fields.List(fields.Integer, min_items=3, max_items=3),
+                title=u'用户权限',
+                required=True, min_items=8, max_items=8),
+            u'inherit': fields.Integer(title=u'可继承', description=u'0 代表不可继承, 1 代表可继承'),
+        })
+        self.hits = ns.model(u'FileHits', {
+                u'o': fields.Integer(title=u'所有者点击', description=u'文件所有者访问文件内容的次数'),
+                u'g': fields.Integer(title=u'所有组点击', description=u'文件所有组访问文件内容的次数'),
+                u'u': fields.Integer(title=u'责任者点击', description=u'文件责任者(具有写权限)访问文件内容的次数'),
+                u'p': fields.Integer(title=u'公众访问数', description=u'其他用户访问文件内容的次数'),
+            }, title=u'点击数')
         self.inode = ns.model(u'FileINode', {
             u'fid': fields.String(title=u'唯一标识', required=True),
             u'dev': fields.String(title=u'所在设备', required=True),
@@ -26,34 +43,15 @@ class Models(object):
             u'change': fields.DateTime(title=u'最后变更时间', description=u'上一次文件信息变动的时间', required=True),
             u'create': fields.DateTime(title=u'创建时间', required=True),
             u'creator': fields.String(title=u'创建者', required=True),
-        })
-        self.perms = ns.model(u'FilePermissions', {
-            u'perms': fields.List(
-                fields.List(fields.Integer, min_items=3, max_items=3),
-                title=u'用户权限',
-                required=True, min_items=8, max_items=8)
-        })
-        self.ace = ns.model(u'FileACLEntry', {
-            u'sid': fields.String(
-                title=u'用户SID',
-                description=u'ACL条目用户SID，SID由用户对象类型和用户对象ID组合而成，形如[u|g|r]:<UUID>，不能为空',
-                required=True),
             u'perms': fields.List(
                 fields.List(fields.Integer, min_items=3, max_items=3),
                 title=u'用户权限',
                 required=True, min_items=8, max_items=8),
-            u'inherit': fields.Integer(title=u'可继承', description=u'0 代表不可继承, 1 代表可继承'),
-        })
-        self.acl = ns.model(u'FileACL', {
-            u'acl': fields.List(fields.Nested(self.ace))
-        })
-        self.hits = ns.model(u'FileHits', {
-            u'hits': fields.Nested({
-                u'o': fields.Integer(title=u'所有者点击', description=u'文件所有者访问文件内容的次数'),
-                u'g': fields.Integer(title=u'所有组点击', description=u'文件所有组访问文件内容的次数'),
-                u'u': fields.Integer(title=u'责任者点击', description=u'文件责任者(具有写权限)访问文件内容的次数'),
-                u'p': fields.Integer(title=u'公众访问数', description=u'其他用户访问文件内容的次数'),
-            }, title=u'点击数'),
+            u'acl': fields.List(fields.Nested(self.ace), title=u'ACL权限列表'),
+            u'hits': fields.Nested(self.hits),
+            u'tags': fields.List(fields.String, title=u'文件标签'),
+            u'xattrs': fields.Nested({}, additionalProperties=True),
+            u'content': fields.String(title=u'文件内容'),
         })
 
 CREATE_OPS = [u'mkdir', u'mkdirs', u'mkdirp', u'touch', u'link']
@@ -71,7 +69,9 @@ class Requests(object):
         self.update_model = ns.model(u'FileUpdateModel', {
             u'owner': fields.String(title=u'文件所有者'),
             u'group': fields.String(title=u'文件所有组'),
-            u'mode': fields.String(title=u'基本权限模式'),
+            u'mode': fields.List(
+                fields.List(fields.Integer, min_items=3, max_items=3),
+                title=u'基本权限模式', min_items=3, max_items=3),
             u'acl': fields.List(fields.Nested(models.ace), title=u'ACL权限列表'),
             u'content': fields.String(title=u'文件内容'),
             u'tags': fields.List(fields.String, title=u'文件标签'),
@@ -79,6 +79,7 @@ class Requests(object):
         # 创建文件对象请求
         self.create = ns.parser()
         self.create.add_argument(u'op', help=u'操作类型', required=True, location=u'args')
+        self.create.add_argument(u'returns', help=u'返回内容', action=u'append', location=u'args')
         # self.create.add_argument(u'file', help=u'上传文件', type=FileStorage, location=u'files')
         # op=mkdir
         # op=mkdirs

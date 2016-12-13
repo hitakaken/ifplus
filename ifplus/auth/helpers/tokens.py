@@ -269,7 +269,6 @@ class Tokens(object):
 
     def get_and_check_session_id(self, request):
         """将Cookie中Session_id取出并简单校验"""
-        print request.cookies
         if 'SID' not in request.cookies:
             return None
         sid = request.cookies.get('SID')
@@ -284,11 +283,9 @@ class Tokens(object):
         """根据请求获取用户"""
         try:
             session_id = self.get_and_check_session_id(request)
-            print session_id
             if session_id is None:
                 return None
             saved = json.loads(self.app.cache.get(TOKEN_CACHE_PREFIX + session_id), encoding='utf-8')
-            print saved
             if saved is None:
                 return None
             if not self.check_saved_user_and_request(saved, request):

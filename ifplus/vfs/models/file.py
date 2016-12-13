@@ -7,6 +7,7 @@ class FileObject(FileHits, FileXattrs, FileContent, FileComments, FileTags, File
     def __init__(self, file_path, underlying, vfs=None):
         super(FileObject, self).__init__(underlying, vfs=vfs)
         self.file_path = file_path
+        self.is_newly = False
 
     @property
     def is_loaded(self):
