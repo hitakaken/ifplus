@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from errno import EPERM
-from ...base.operations import FuseOSError
+from ..exceptions import FuseOSError
 from .acls import FileAcls, M_WRITE
 
 

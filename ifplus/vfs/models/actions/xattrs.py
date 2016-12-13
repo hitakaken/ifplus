@@ -2,7 +2,7 @@
 import copy
 import dpath.util
 from errno import EPERM
-from ...base.operations import FuseOSError
+from ..exceptions import FuseOSError
 from .acls import FileAcls, M_XWRITE
 
 

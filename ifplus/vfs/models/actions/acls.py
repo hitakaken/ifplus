@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-import six
 from errno import EPERM
-from ...base.operations import FuseOSError
+from ..exceptions import FuseOSError
 from .inodes import FileINode
 
 M_NONE = 0b00000000  # 无权限
