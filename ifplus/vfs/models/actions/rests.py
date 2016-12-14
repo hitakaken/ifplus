@@ -35,7 +35,10 @@ class Models(object):
             u'name': fields.String(title=u'文件名', required=True),
             u'owner': fields.String(title=u'所有者', required=True),
             u'group': fields.String(title=u'所在组', required=True),
-            u'mode': fields.String(title=u'文件模式', required=True),
+            u'ftype': fields.String(title=u'文件类型', required=True),
+            u'mode': fields.List(
+                fields.List(fields.Integer, min_items=3, max_items=3),
+                title=u'基本权限模式', min_items=3, max_items=3),
             u'nlink': fields.Integer(title=u'链接数', required=True),
             u'size': fields.Integer(title=u'文件大小', required=True),
             u'access': fields.DateTime(title=u'最后访问时间', required=True),
@@ -55,7 +58,7 @@ class Models(object):
         })
 
 CREATE_OPS = [u'mkdir', u'mkdirs', u'mkdirp', u'touch', u'link']
-READ_OPS = [u'list', u'read', u'download']
+READ_OPS = [u'list', u'stat', u'download']
 UPDATE_OPS = [u'write', u'rename', u'move', u'update']
 DELETE_OPS = [u'rmdir', u'rm']
 
@@ -83,31 +86,38 @@ class Requests(object):
         # self.create.add_argument(u'file', help=u'上传文件', type=FileStorage, location=u'files')
         # op=mkdir
         # op=mkdirs
+        self.create.add_argument(u'subdir', help=u'子文件夹名', action=u'append', location=u'args')
         # op=touch
         # op=link
+        self.create.add_argument(u'target', help=u'目标文件', location=u'args')
 
         # 读取文件对象请求
         self.read = ns.parser()
         self.read.add_argument(u'op', help=u'操作类型', required=True, location=u'args')
+        self.read.add_argument(u'returns', help=u'返回内容', action=u'append', location=u'args')
         # op=list
-        self.read.add_argument(u'page.size', help=u'每页记录数', location=u'args')
-        self.read.add_argument(u'page.page', help=u'当前页码', location=u'args')
-        # op=read
+        self.read.add_argument(u'selfmode', help=u'是否返回本身', type=int, location=u'args')
+        self.read.add_argument(u'recursion', help=u'是否递归', type=int, location=u'args')
+        self.read.add_argument(u'withlinks', help=u'是否跟随链接', type=int, location=u'args')
+        self.read.add_argument(u'page.size', help=u'每页记录数', type=int, location=u'args')
+        self.read.add_argument(u'page.page', help=u'当前页码', type=int, location=u'args')
+        # op=stat
 
-        # op=list or read
+        # op=list or stat
 
         # op=download
 
         # 更新文件对象请求
         self.update = ns.parser()
         self.update.add_argument(u'op', help=u'操作类型', required=True, location=u'args')
-        # op = write
-        # self.update.add_argument(u'file', help=u'上传文件', type=FileStorage, location=u'files')
+        self.update.add_argument(u'returns', help=u'返回内容', action=u'append', location=u'args')
+        # op=update
+
         # op=rename
 
         # op=move
 
-        # op=update
+
 
         # 删除文件对象请求
         self.delete = ns.parser()
@@ -116,9 +126,11 @@ class Requests(object):
 
         # op=rm
 
+        # unlink
+
         # 上传文件对象
         self.upload = ns.parser()
-        self.upload.add_argument(u'file', help=u'上传文件', type=FileStorage, location=u'files')
+        self.upload.add_argument(u'file', help=u'上传文件', type=FileStorage, required=True, location=u'files')
 
 class Responses(object):
     """Restful请求响应"""

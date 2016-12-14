@@ -14,9 +14,11 @@ class FileSymlink(FileAcls):
         self.underlying[u'mode'] &= 0x80000000 | 0o007777
         self.underlying[u'mode'] |= 0o120000
         self.underlying[u'symlink'] = {
-            u'id': target.file_id,
-            u'path': target.real_path
+            u'id': target.fid,
+            u'path': target.real_path,
+            u'type': (u'%06o' % (0o0177777 & target.mode))[:2],
         }
+        target.add_link(self)
         return self
 
     @property
@@ -42,7 +44,11 @@ class FileSymlink(FileAcls):
         allow, deny, grant = self.user_perms(user=user, perms=perms)
         if allow & M_WRITE == 0:
             raise FuseOSError(EPERM)
-        self.symlink = target
+        self.symlink = {
+            u'id': target.fid,
+            u'path': target.real_path,
+            u'type': (u'%06o' % (0o0177777 & target.mode))[:2],
+        }
 
     def get_symlink(self, result=None):
         """记录文件软链接"""
@@ -57,11 +63,33 @@ class FileSymlink(FileAcls):
         return self
 
     @property
-    def refs(self):
-        return self.underlying.get(u'refs', [])
+    def links(self):
+        return self.underlying.get(u'links', [])
 
-    def add_ref(self):
-        pass
+    def add_link(self, link):
+        found = False
+        new_links = []
+        for link_file in self.links:
+            if link_file[u'id'] == link.fid:
+                found = True
+                new_links.append({u'id': link.fid, u'path': link.real_path})
+            else:
+                new_links.append(link_file)
+        if not found:
+            new_links.append({u'id': link.fid, u'path': link.real_path})
+            self.nlink = len(new_links) + 1
+        self.underlying[u'links'] = new_links
+        self.changes[u'inodes'].add(u'links')
 
-    def remove_ref(self):
-        pass
+    def remove_link(self, link):
+        found = False
+        new_links = []
+        for link_file in self.links:
+            if link_file[u'id'] == link.fid:
+                found = True
+            else:
+                new_links.append(link_file)
+        if found:
+            self.nlink = len(new_links) + 1
+            self.underlying[u'links'] = new_links
+            self.changes[u'inodes'].add(u'links')

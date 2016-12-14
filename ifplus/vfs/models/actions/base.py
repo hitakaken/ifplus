@@ -17,5 +17,8 @@ class BaseFileNode(object):
             u'content': set(),
             u'xattrs': set(),
         }
-        # 是否新建文件对象
-        self.newly = underlying is None
+
+    @property
+    def is_changed(self):
+        return len(self.changes[u'inodes']) > 0 or self.changes[u'acl'] or self.changes[u'hits'] > 0 \
+               or len(self.changes[u'content']) > 0 or len(self.changes[u'xattrs']) > 0

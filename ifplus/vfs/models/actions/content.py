@@ -104,14 +104,14 @@ class FileContent(FileAcls):
         if allow & M_READ == 0:
             raise FuseOSError(EPERM)
         self.visited(atime=atime)
-        return self.vfs.read(self)
+        return self.vfs.read_text(self)
 
     def write(self, data, user=None, perms=None, mtime=None):
         allow, deny, grant = self.user_perms(user=user, perms=perms)
         if allow & M_WRITE == 0:
             raise FuseOSError(EPERM)
         self.modified(mtime=mtime)
-        return
+        return self.vfs.write_stream(self, data)
 
     def get_content(self, result=None, user=None, perms=None, atime=None):
         """获取文件内容"""

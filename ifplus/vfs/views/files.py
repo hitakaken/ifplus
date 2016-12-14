@@ -48,6 +48,14 @@ def handle_fuse_os_error(error):
 # mode_pattern = re.compile('^[0-7]{3}$')
 
 
+@ns.route('/files')
+class UserRootView(Resource):
+    @ns.doc(id='entry')
+    @login_required
+    def get(self):
+        app.vfs.read('~')
+
+
 @ns.route('/files/<path:file_path>')
 class Files(Resource):
     @ns.doc(id='create')

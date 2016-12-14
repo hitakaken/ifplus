@@ -69,7 +69,10 @@ class FileAcls(FileINode):
         inherits = []
         for ace in self.acl:
             if ace[u'mask'] & 0x01000000 > 0:
-                inherits.append(ace)
+                inherits.append({
+                    u'sid': ace[u'sid'],
+                    u'mask': ace[u'mask'] | 0x02000000
+                })
         return inherits
 
     @acl.setter
@@ -170,6 +173,7 @@ class FileAcls(FileINode):
         if self.is_owner(user=user):
             grant |= 0xFF
             allow |= self.mode & 0o700 >> 1
+            allow |= 0x1F
         if self.is_group(user=user):
             allow |= self.mode & 0o070 << 2
         # 遍历ACL条目
@@ -195,7 +199,7 @@ class FileAcls(FileINode):
             result = {}
         result.update({
             u'acl': [{
-                         u'sid': ace[u'sid'],
+                         u'sid': self.vfs.lookup_user(ace[u'sid']),
                          u'perms': convert_permission_binary_to_array(ace[u'mask']),
                          u'inherit': 1 if ace[u'mask'] & 0x01000000 > 0 else 0
                      }

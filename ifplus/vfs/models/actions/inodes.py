@@ -4,6 +4,7 @@ import stat
 import os.path
 from bidict import bidict
 from .base import BaseFileNode
+from ifplus.data.helpers import time_utils
 
 MANAGED_ATTRIBUTE_NAMES = bidict({
     # 文件定位信息
@@ -49,9 +50,17 @@ class FileINode(BaseFileNode):
         return self
 
     @property
+    def id(self):
+        return self.underlying[u'_id']
+
+    @property
     def file_id(self):
         """文件唯一标识"""
         return str(self.underlying[u'_id']) if self.underlying[u'_id'] is not None else None
+
+    @property
+    def fid(self):
+        return str(self.file_id)
 
     @file_id.setter
     def file_id(self, file_id):
@@ -219,7 +228,7 @@ class FileINode(BaseFileNode):
 
     def visited(self, atime=None):
         if atime is None:
-            atime = datetime.datetime.now()
+            atime = datetime.datetime.utcnow()
         self.underlying[u'atime'] = atime
         self.changes[u'inodes'].add(u'atime')
 
@@ -235,7 +244,7 @@ class FileINode(BaseFileNode):
 
     def modified(self, mtime=None):
         if mtime is None:
-            mtime = datetime.datetime.now()
+            mtime = datetime.datetime.utcnow()
         self.underlying[u'mtime'] = mtime
         self.changes[u'inodes'].add(u'mtime')
 
@@ -251,7 +260,7 @@ class FileINode(BaseFileNode):
 
     def changed(self, ctime=None):
         if ctime is None:
-            ctime = datetime.datetime.now()
+            ctime = datetime.datetime.utcnow()
         self.underlying[u'ctime'] = ctime
         self.changes[u'inodes'].add(u'ctime')
 
@@ -269,20 +278,26 @@ class FileINode(BaseFileNode):
         """输出INode信息"""
         if result is None:
             result = {}
+        strs = bin(self.mode)[-9:]
+        mode_array = [
+            [int(strs[0]),int(strs[1]),int(strs[2])],
+            [int(strs[3]),int(strs[4]),int(strs[5])],
+            [int(strs[6]),int(strs[7]),int(strs[8])]]
         result.update({
-            u'fid': self.file_id,
+            u'fid': self.fid,
             u'dev': self.dev,
             u'name': self.name,
-            u'owner': self.owner,
-            u'group': self.group,
-            u'mode': u'%06o' % (0o0177777 & self.mode),
+            u'owner': self.vfs.lookup_user(self.owner),
+            u'group': self.vfs.lookup_user(self.group),
+            u'ftype': (u'%06o' % (0o0177777 & self.mode))[:2],
+            u'mode': mode_array,
             u'nlink': self.nlink,
             u'size': self.size,
-            u'access': self.access,
-            u'modify': self.modify,
-            u'change': self.change,
-            u'create': self.create,
-            u'creator': self.creator
+            u'access': time_utils.timestamp(self.access),
+            u'modify': time_utils.timestamp(self.modify),
+            u'change': time_utils.timestamp(self.change),
+            u'create': time_utils.timestamp(self.create),
+            u'creator': self.vfs.lookup_user(self.creator)
         })
         return result
 

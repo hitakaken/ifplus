@@ -31,11 +31,8 @@ class TokenUser(UserMixin):
 
     @property
     def is_admin(self):
-        return ADMIN_ROLE in self.roles
-
-    @classmethod
-    def model(cls, ns):
-        parser = ns.parser()
-        parser.add_argument('AuthToken', location='headers')
-        return parser
+        for role in self.roles:
+            if role in self.tokens.supers:
+                return True
+        return False
 

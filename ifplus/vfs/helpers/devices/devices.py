@@ -76,7 +76,7 @@ class MongoDevice(VirtualDevice):
     @staticmethod
     def create_document(name, parent, mode=0o750, mask=S_IFDIR, **kwargs):
         """创建JSON文档"""
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         if parent is not None:
             ancestors = parent.underlying[u'ancestors']
             ancestors.append(parent.underlying[u'name'])
@@ -284,7 +284,7 @@ class MongoDevice(VirtualDevice):
         if type(nodes[-1]) == unicode:
             self.mongo.db.files.insert(file_node.underlying)
         else:
-            now = datetime.datetime.now()
+            now = datetime.datetime.utcnow()
             file_node[u'atime'] = now
             file_node[u'mtime'] = now
             self.mongo.db.files.update_one(

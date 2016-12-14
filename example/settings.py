@@ -2,9 +2,9 @@
 # SERVER_IP = '10.1.80.180'
 SERVER_IP = '106.14.20.122'
 
-MONGO_HOST = SERVER_IP
+MONGO_HOST = '192.168.25.105'
 MONGO_PORT = 27017
-MONGO_DBNAME = 'ifplus'
+MONGO_DBNAME = 'istis'
 
 REDIS_URL = 'redis://' + SERVER_IP + ':6379/0'
 REDIS_IP = '127.0.0.1' # SERVER_IP  # '192.168.25.105'
@@ -42,7 +42,7 @@ TOKEN = {
     'REFRESH_EXPIRED': 36000,
     'HASHIDS_SALT': 'hashids.chinaconsult.com',
     'TRUST_PROXIES': {'127.0.0.1'},
-    'SUPERS': {'26648537-45ca-4f89-9a99-3c458b1ddaba'},
+    'SUPERS': {'26648537-45ca-4f89-9a99-3c458b1ddaba', '8f77ed0d-6e1e-45d8-8a5c-0ebf4f734d4c'},
     'COOKIE': {
         'DOMAIN': 'www.chinaconsult.com',
         # 'SECURE': True,
@@ -62,8 +62,8 @@ VFS = {
         u'gid': u'r:26648537-45ca-4f89-9a99-3c458b1ddaba'
     },
     'DEVICES': {
-        '/home': {'type': 'nfs'},
-        '/www': {'type': 'local'},
-        '/projects': {'type': 'nfs'}
+        # '/home': {'type': 'nfs'},
+        # '/www': {'type': 'local'},
+        # '/projects': {'type': 'nfs'}
     }
 }

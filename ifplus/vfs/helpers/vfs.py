@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 # bitsAllSet
-import os
-import datetime
 from bson import ObjectId
 from errno import *
 from .devices.base import RootDevice
@@ -13,21 +11,24 @@ from ..models.actions import content
 from ..models.actions.acls import M_WRITE
 from ..models.file import FileObject
 # from .devices import MongoDevice
-from ifplus.data.helpers.mongo_utils import init_indexes
+from ifplus.data.helpers.mongo_utils import init_collection, init_indexes
+from ifplus.data.helpers.time_utils import utcnow
 
 
 class VirtualFileSystem(object):
     def __init__(self, app, rid=None, root=None, devices=None, **kwargs):
         # super(VirtualFileSystem, self).__init__(**kwargs)
+        self.app = app
         self.mongo = app.mongo  # MongoDB Collection: files
         self.cache = app.cache
-        self.devices = {u'/': RootDevice(rid, self)}
+        self.devices = {u'/': RootDevice(rid, vfs=self)}
         if devices is not None:
             self.devices.update(devices)
         self.root_file = FileObject(u'/', root, vfs=self)
         self.init_root_file()
 
     def init_mongo(self):
+        init_collection(self.mongo.db, 'contents')
         init_indexes(self.mongo.db, 'files', MONGO_INDEXES)
         init_indexes(self.mongo.db, 'comments', comment.MONGO_INDEXES)
 
@@ -44,7 +45,7 @@ class VirtualFileSystem(object):
             self.root_file.underlying[u'parent'] = None
         if u'mode' not in self.root_file.underlying:
             self.root_file.underlying[u'mode'] = 0x80000000 | 0o047750
-        self.root_file.init_inode(u'', datetime.datetime.now()).init_acl().init_hits().init_xattrs()
+        self.root_file.init_inode(u'', utcnow()).init_acl().init_hits().init_xattrs()
         self.root_file.init_comments(False).init_tags()
 
     # def device_of(self, file_path):
@@ -59,8 +60,12 @@ class VirtualFileSystem(object):
     #     device = device if device is not None else self.device_of(file_path)
     #     return os.path.relpath(file_path, device.root)
 
-    def lookup(self, fid):
-        return self._lookup_by_id(fid)
+    def lookup(self, input):
+        if isinstance(input, ObjectId):
+            return self._lookup_by_id(input)
+        elif isinstance(input, unicode):
+            return self._lookup_by_file_path(input)
+        raise FuseOSError(EINVAL)
 
     def _lookup_by_id(self, fid, current_path=None):
         underlying = self.mongo.db.files.find_one({u'_id': fid})
@@ -82,7 +87,7 @@ class VirtualFileSystem(object):
         return None
 
     def _lookup_by_parent_and_name(self, parent, name, current_path=None):
-        underlying = self.mongo.db.files.find_one({u'parent': parent.file_id, u'name': name})
+        underlying = self.mongo.db.files.find_one({u'parent': parent.id, u'name': name})
         if underlying is None:
             return None
         file_object = FileObject(current_path, underlying, vfs=self)
@@ -103,7 +108,7 @@ class VirtualFileSystem(object):
             return file_object, self._lookup_by_link(file_object, current_path=current_path)
 
     def resolve_file_path(self, file_path, **kwargs):
-        if file_path.startswith(u'~/'):
+        if file_path.startswith(u'~'):
             user = kwargs.get(u'user')
             if user is None or user.is_anonymous:
                 raise FuseOSError(EPERM)
@@ -136,13 +141,32 @@ class VirtualFileSystem(object):
                 parts.append((file_object, symlink))
         return parts
 
-    def save(self, file_object):
-        if file_object.is_newly:
-            self.mongo.db.files.insert_one(file_object.underlying)
-        else:
-            pass
+    def get_device_of(self, file_object):
+        partnames = file_object.partnames
+        for i in range(0, len(partnames)):
+            current_path = u'/' + u'/'.join(partnames[0:i])
+            if current_path in self.devices:
+                return self.devices[current_path]
+        return self.devices[u'/']
 
-    def update_payload(self, file_object, payload, time=None, user=None, perms=None):
+    def save(self, file_object):
+        device = self.get_device_of(file_object)
+        device.save(file_object)
+
+    def write_stream(self, file_object, steam):
+        device = self.get_device_of(file_object)
+        device.write_stream(file_object, steam)
+
+    def read_stream(self, file_object):
+        device = self.get_device_of(file_object)
+        return device.read_stream(file_object)
+
+    def read_text(self, file_object):
+        device = self.get_device_of(file_object)
+        return device.read_text(file_object)
+
+    @staticmethod
+    def update_payload(file_object, payload, time=None, user=None, perms=None):
         if u'owner' in payload:
             file_object.uid = payload[u'owner']
         if u'group' in payload:
@@ -183,15 +207,61 @@ class VirtualFileSystem(object):
                 file_object.update_acl(acl, user=user, perms=perms, ctime=time)
         if u'xattrs' in payload:
             file_object.update_xattrs(payload[u'xattrs'], user=user, perms=perms, ctime=time)
-        if u'content' in payload and file_object.is_flie:
+        if u'content' in payload and file_object.is_file:
             file_object.storage_type = content.STORAGE_OBJECT
             file_object.content_type = content.CONTENT_TYPE_TEXT
             file_object.content = payload[u'content']
+            file_object.modified(mtime=time)
         if u'tags' in payload:
             file_object.add_tags(payload[u'tags'], user=user, perms=perms)
         return file_object
 
+    @staticmethod
+    def returns(file_object, returns, display_path, user=None, perms=None, atime=None):
+        xattrs_namespace = []
+        xattrs_attrnames = []
+        for key in returns:
+            if key == u'path':
+                file_object.record_real_path()
+                if file_object.is_link:
+                    file_object.record_symlink()
+            elif key == u'inodes':
+                file_object.record_inodes()
+                file_object.record_perms(user=user)
+                if file_object.is_link:
+                    file_object.record_symlink()
+            elif key == u'acl':
+                file_object.record_perms(user=user)
+                file_object.record_acl()
+            elif key == u'hits':
+                file_object.record_hits()
+            elif key == u'tags':
+                file_object.record_tags()
+            elif key.startswith(u'xattrs.'):
+                xattr = key[7:]
+                if u'.' in xattr:
+                    xattrs_attrnames.append(xattr)
+                else:
+                    xattrs_namespace.append(xattr)
+            elif key == u'content':
+                file_object.record_content(user=user, perms=perms, atime=atime)
+        if len(xattrs_namespace) + len(xattrs_attrnames) > 1:
+            file_object.record_xattrs(xattrs_namespace, xattrs_attrnames)
+        file_object.result.update({u'display_path': display_path})
+        return file_object.result
+
+    @staticmethod
+    def get_display_path(file_path):
+        if file_path[0] == u'~' or file_path[1] == u'/':
+            display_path = file_path
+        else:
+            display_path = u'/' + file_path
+        if display_path[-1] == u'/':
+            display_path = display_path[:-1]
+        return display_path
+
     def create(self, file_path, **kwargs):
+        display_path = self.get_display_path(file_path)
         op = kwargs.get(u'op')
         if op not in CREATE_OPS:
             raise FuseOSError(EROFS)
@@ -199,10 +269,10 @@ class VirtualFileSystem(object):
         if not isinstance(parts[-1], unicode):
             raise FuseOSError(EEXIST)
         user = kwargs.get(u'user')
-        payload = kwargs.get(u'payload')
-        now = datetime.datetime.now()
-        # 创建文件夹
-        if op == u'mkdir':
+        payload = kwargs.get(u'payload') if kwargs.get(u'payload') is not None else {}
+        returns = kwargs.get(u'returns') if kwargs[u'returns'] is not None else [u'path']
+        now = utcnow()
+        if op == u'mkdir' or op == u'mkdirs' or op == u'touch' or op == u'link':
             # 检查待创建文件夹不存在
             if isinstance(parts[-2], unicode):
                 raise FuseOSError(ENOENT)
@@ -220,54 +290,169 @@ class VirtualFileSystem(object):
             name = parts[-1]
             current_path = parent.file_path + name if parent.file_path[-1] == u'/' else parent.file_path + u'/' + name
             file_object = FileObject(current_path, {u'_id': ObjectId()}, vfs=self)
-            file_object.is_newly = True
-            file_object.init_inode(name, now, user=user).init_acl(parent.inherits).init_xattrs()
-            file_object.init_comments(False).init_tags()
-            file_object.init_tree(
-                parent=parent.file_id,
-                ancestors=[] if parent.file_id is None else parent.ancestors + [parent.name])
-            file_object.mode = parent.mode
+            file_object.init(parent, name, time=now, user=user, is_file=(op == u'touch'))
             file_object = self.update_payload(file_object, payload, time=now, user=user, perms=(0xFF, 0x00, 0xFF))
-            self.save(file_object)
-            self.returns(file_object)
-            return 200
-        elif op == u'mkdirs':
-            pass
+            # 创建文件夹
+            if op == u'mkdir':
+                self.save(file_object)
+                return self.returns(file_object, returns, display_path, user=user, perms=(0xFF, 0x00, 0xFF))
+            # 创建文件夹及其子文件夹
+            elif op == u'mkdirs':
+                results = [self.returns(file_object, returns, display_path,
+                                        user=user, perms=(0xFF, 0x00, 0xFF), atime=now)]
+                files = [file_object]
+                for subdirname in kwargs.get(u'subdir', []):
+                    sub_object = FileObject(current_path + u'/' + subdirname, {u'_id': ObjectId()}, vfs=self)
+                    sub_object.init(file_object, subdirname, time=now, user=user)
+                    results.append(self.returns(sub_object, returns, display_path + u'/' + subdirname,
+                                              user=user, perms=(0xFF, 0x00, 0xFF), atime=now))
+                    files.append(sub_object)
+                for f in files:
+                    self.save(f)
+                return {u'files': results}
+            # 创建文件
+            elif op == u'touch':
+                file_object.underlying[u'mode'] &= 0x80000000 | 0o007777
+                file_object.underlying[u'mode'] |= 0o100000
+                self.save(file_object)
+                return self.returns(file_object, returns, display_path, user=user, perms=(0xFF, 0x00, 0xFF), atime=now)
+            elif op == u'link':
+                if u'target' not in kwargs:
+                    raise FuseOSError(EINVAL)
+                target_file = self._lookup_by_file_path(kwargs.get(u'target'))
+                if target_file is None:
+                    raise FuseOSError(ENOENT)
+                file_object.init_symlink(target_file)
+                target_file.add_link(file_object)
+                self.save(file_object)
+                self.save(target_file)
+                return self.returns(file_object, returns, display_path, user=user, perms=(0xFF, 0x00, 0xFF), atime=now)
         elif op == u'mkdirp':
-            pass
-        elif op == u'touch':
-            pass
-        elif op == u'link':
             pass
         raise FuseOSError(EROFS)
 
     def read(self, file_path, **kwargs):
+        display_path = self.get_display_path(file_path)
         op = kwargs.get(u'op')
         if op not in READ_OPS:
             raise FuseOSError(EROFS)
         user = kwargs.get(u'user')
         parts = self.resolve_file_path(file_path, **kwargs)
-        if op == u'mkdir':
-            pass
-        elif op == u'mkdir':
-            pass
-        elif op == u'mkdir':
-            pass
+        now = utcnow()
+        # 检查待读取对象是否存在
+        if isinstance(parts[-1], unicode):
+            raise FuseOSError(ENOENT)
+        if isinstance(parts[-1], FileObject):
+            file_object = parts[-1]
+        else:
+            symlink, file_object = parts[-1]
+        # 获取用户权限
+        allow, deny, grant = file_object.user_perms(user=user)
+        returns = kwargs.get(u'returns') if kwargs[u'returns'] is not None else [u'path']
+        ask_perms = 0x00
+        for key in returns:
+            if key == u'content':
+                ask_perms |= 0x80
+            elif key == u'acl':
+                ask_perms |= 0x80
+            elif key == u'comments':
+                ask_perms |= 0x80
+            elif key == u'tags':
+                ask_perms |= 0x80
+            elif key.startswith(u'xattrs.'):
+                ask_perms |= 0x80
+        if op == u'stat':
+            if allow & ask_perms == 0:
+                raise FuseOSError(EPERM)
+            result = self.returns(file_object, returns, display_path, user=user, perms=(allow, deny, grant), atime=now)
+            if file_object.is_changed:
+                self.save(file_object)
+            return result
+        elif op == u'list':
+            if not file_object.is_folder:
+                raise FuseOSError(ENOTDIR)
+            ask_perms |= 0x20
+            if allow & ask_perms == 0:
+                raise FuseOSError(EPERM)
+            if u'inodes' not in returns:
+                returns.append(u'inodes')
+            if u'content' in returns:
+                returns.remove(u'content')
+            if u'recursion' in kwargs and kwargs[u'recursion'] > 0:
+                if u'withlinks' in kwargs and kwargs[u'withlinks'] > 0:
+                    raise FuseOSError(ENOSYS)
+            else:
+                file_documents = self.mongo.db.files.find(
+                    {u'parent': file_object.id}
+                ).sort([(u'mode', 1), (u'name', 1)])
+                current_path = file_object.real_path
+                file_objects = [FileObject(current_path + u'/' + file_document[u'name'], file_document, vfs=self)
+                                for file_document in file_documents]
+                children = [self.returns(file_obj, returns, display_path + u'/' + file_obj.name,
+                                     user=user, atime=now)
+                        for file_obj in file_objects]
+                if kwargs[u'selfmode'] is not None and kwargs[u'selfmode'] > 0:
+                    result = self.returns(file_object, returns, display_path,
+                        user=user, perms=(allow, deny, grant), atime=now)
+                    result[u'children'] = children
+                else:
+                    result = children
+                return result
+        elif op == u'download':
+            ask_perms |= 0x80
+            if allow & ask_perms == 0:
+                raise FuseOSError(EPERM)
+            if not file_object.is_file:
+                raise FuseOSError(EISDIR)
+            file_object.hit(user=user, atime=now)
+            return self.read_stream(file_object)
         raise FuseOSError(EROFS)
 
     def update(self, file_path, **kwargs):
+        display_path = self.get_display_path(file_path)
         op = kwargs.get(u'op')
         if op not in UPDATE_OPS:
             raise FuseOSError(EROFS)
-        user = kwargs.get(u'user')
         parts = self.resolve_file_path(file_path, **kwargs)
-        if op == u'mkdir':
+        # 检查待读取对象是否存在
+        if isinstance(parts[-1], unicode):
+            raise FuseOSError(ENOENT)
+        if isinstance(parts[-1], FileObject):
+            file_object = parts[-1]
+        else:
+            symlink, file_object = parts[-1]
+        returns = kwargs.get(u'returns') if kwargs[u'returns'] is not None else [u'path']
+        user = kwargs.get(u'user')
+        allow, deny, grant = file_object.user_perms(user=user)
+        now = utcnow()
+        if op == u'update':
+            payload = kwargs.get(u'payload') if kwargs.get(u'payload') is not None else {}
+            ask_perm = 0x00
+            if u'owner' in payload:
+                ask_perm |= 0xff
+            if u'group' in payload:
+                ask_perm |= 0xff
+            if u'mode' in payload:
+                ask_perm |= 0xff
+            if u'acl' in payload:
+                ask_perm |= 0x08
+            if u'xattrs' in payload:
+                ask_perm |= 0x04
+            if u'content' in payload and file_object.is_file:
+                ask_perm |= 0x40
+                file_object.modified(mtime=now)
+            if u'comments' in payload:
+                ask_perm |= 0x02
+            if u'tags' in payload:
+                ask_perm |= 0x02
+            if ask_perm & allow == 0:
+                raise FuseOSError(EPERM)
+            self.update_payload(file_object, payload, time=now, user=user, perms=(allow,deny,grant))
+            self.save(file_object)
+            return self.returns(file_object, returns, display_path, user=user, perms=(allow,deny,grant))
+        elif op == u'rename':
             pass
-        elif op == u'mkdir':
-            pass
-        elif op == u'mkdir':
-            pass
-        elif op == u'mkdir':
+        elif op == u'move':
             pass
         raise FuseOSError(EROFS)
 
@@ -285,10 +470,50 @@ class VirtualFileSystem(object):
 
     def upload(self, file_path, **kwargs):
         parts = self.resolve_file_path(file_path, **kwargs)
-        pass
+        now = utcnow()
+        user = kwargs.get(u'user')
+        # 目标不存在
+        if isinstance(parts[-1], unicode):
+            name = parts[-1]
+            # 父节点存在
+            if isinstance(parts[-2], unicode):
+                raise FuseOSError(ENOENT)
+            if isinstance(parts[-2], FileObject):
+                parent = parts[-2]
+            else:
+                symlink, parent = parts[-2]
+            if not parent.is_folder:
+                raise FuseOSError(ENOTDIR)
+            # 检查用户具有写权限
+            allow, deny, grant = parent.user_perms(user=user)
+            if allow & M_WRITE == 0:
+                raise FuseOSError(EPERM)
+            current_path = parent.file_path + name if parent.file_path[-1] == u'/' else parent.file_path + u'/' + name
+            file_object = FileObject(current_path, {u'_id': ObjectId()}, vfs=self)
+            file_object.init(parent, name, time=now, user=user, is_file=True)
+        else:
+            if isinstance(parts[-1], FileObject):
+                current = parts[-1]
+            else:
+                symlink, current = parts[-1]
+            # 检查用户具有写权限
+            allow, deny, grant = current.user_perms(user=user)
+            if allow & M_WRITE == 0:
+                raise FuseOSError(EPERM)
+            if current.is_folder:
+                name = kwargs.get(u'file').filename
+                exists = self._lookup_by_parent_and_name(current, name)
+                if exists is None:
+                    current_path = current.file_path + name if current.file_path[-1] == u'/' \
+                        else current.file_path + u'/' + name
+                    file_object = FileObject(current_path, {u'_id': ObjectId()}, vfs=self)
+                    file_object.init(current, name, time=now, user=user, is_file=True)
+                else:
+                    file_object = exists
+            else:
+                file_object = current
+        self.write_stream(file_object, kwargs.get(u'file'))
+        return file_object.record_inodes().record_hits().result
 
-    def lookup(self, file_path):
-        pass
-
-    def mkdir(self, file_path, **kwargs):
-        pass
+    def lookup_user(self, sid):
+        return self.app.tokens.lookup_user(sid)

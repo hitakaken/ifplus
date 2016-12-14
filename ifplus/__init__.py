@@ -19,7 +19,7 @@ class Application(object):
         self.auth = None
         self.vfs = None
         self.pm = None
-        self.chats = None
+        # self.chats = None
         if app is not None:
             self.init_app(app, **kwargs)
 
@@ -34,11 +34,12 @@ class Application(object):
         self.rbac = RBAC(app=app, **kwargs)
         self.auth = Authenticator(app=app, **kwargs)
         self.vfs = VFS(app=app,  mongo=self.mongo, **kwargs)
-        self.chats = ChatServer(app=app, **kwargs)
+        # self.chats = ChatServer(app=app, **kwargs)
         self.rest.register()
         # print '注册 REST API'
-        self.chats.register()
+        # self.chats.register()
         # print '注册 Socket-IO'
 
     def run(self, app, **kwargs):
-        self.chats.socketio.run(app, **kwargs)
+        # self.chats.socketio.run(app, **kwargs)
+        pass

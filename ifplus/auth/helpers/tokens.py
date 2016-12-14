@@ -133,7 +133,7 @@ MONGO_INDEXES = [IndexModel([(u'sid', DESCENDING)], name=u'token_session_id')]
 
 def timestamp():
     """获取当前时间戳，以秒为单位"""
-    return int(time.mktime(datetime.datetime.now().timetuple()))
+    return int(time.mktime(datetime.datetime.utcnow().timetuple()))
 
 
 def random_string(length):
@@ -239,6 +239,8 @@ class Tokens(object):
         saved.update({u'_id': token_id})
         saved.update({u'sid': session_id})
         self.app.mongo.db.tokens.insert(saved)
+        auth_token = self.encrypt(claims)
+        refresh_token = self.encrypt(refresh_claims)
         resp = jsonify({
             u'AuthToken': self.encrypt(claims),
             u'RefreshToken': self.encrypt(refresh_claims)
@@ -246,6 +248,7 @@ class Tokens(object):
         salt = random_string(24)
         hashed = self.encrypt({'s': session_id + salt})[-16:]
         resp.set_cookie('SID', value=session_id + salt + hashed, **self.cookie_config)
+        resp.set_cookie('ATK', value=auth_token, **self.cookie_config)
         resp.headers['Access-Control-Allow-Origin'] = "*"
         resp.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
         resp.headers['Access-Control-Allow-Headers'] =\
@@ -312,4 +315,30 @@ class Tokens(object):
             raise NotFound('User not found.')
         return self.make_response(user, request)
 
-
+    def lookup_user(self, sid):
+        if sid is None:
+            return {
+                u'sid': None,
+                u'name': u''
+            }
+        name = self.app.cache.get(u'sid:' + sid)
+        if name is not None:
+            return {
+                u'sid': sid,
+                u'name': name
+            }
+        iid = sid[2:]
+        if sid[:2] == u'u:':
+            user = self.app.rbac.users.find_by_iid(iid)
+            self.app.cache.set(u'sid:' + sid, user.name, timeout=24*3600)
+            return {
+                u'sid': sid,
+                u'name': user.name
+            }
+        if sid[:2] == u'r:':
+            role = self.app.rbac.roles.find_by_iid(iid)
+            self.app.cache.set(u'sid:' + sid, role.name, timeout=24 * 3600)
+            return {
+                u'sid': sid,
+                u'name': role.name
+            }

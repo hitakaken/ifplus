@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 from errno import EPERM
 from ..exceptions import FuseOSError
 from .acls import FileAcls, M_TWRITE
@@ -34,7 +35,7 @@ class FileTags(FileAcls):
         allow, deny, grant = self.user_perms(user=user, perms=perms)
         if allow & M_TWRITE == 0:
             raise FuseOSError(EPERM)
-        new_tags = self.underlying.get(u'tags', []).copy()
+        new_tags = copy.deepcopy(self.underlying.get(u'tags', []))
         sid = user.sid
         exists_tags = []
         for tag in new_tags:
@@ -53,7 +54,7 @@ class FileTags(FileAcls):
         allow, deny, grant = self.user_perms(user=user, perms=perms)
         if allow & M_TWRITE == 0:
             raise FuseOSError(EPERM)
-        new_tags = self.underlying.get(u'tags', []).copy()
+        new_tags = copy.deepcopy(self.underlying.get(u'tags', []))
         sid = user.sid
         for tag in new_tags:
             if tag[u't'] in tags:

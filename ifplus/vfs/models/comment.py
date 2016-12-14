@@ -10,7 +10,7 @@ from ifplus.restful.patched import fields
 
 def comment(fid, text, parent_slug=None, user=None, ts=None):
     if ts is None:
-        ts = datetime.datetime.now()
+        ts = datetime.datetime.utcnow()
     slug_part = u''.join(
         [unicode((string.ascii_letters + string.digits)[x], 'utf-8') for x in random.sample(range(0, 62), 4)])
     slug = parent_slug + u'/' + slug_part if parent_slug else slug_part

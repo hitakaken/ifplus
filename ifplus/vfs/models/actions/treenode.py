@@ -38,7 +38,10 @@ class FileTreeNode(FileSymlink):
     @property
     def real_path(self):
         """文件真实路径，跟随软链接"""
-        return u'/'.join(self.ancestors) + u'/' + self.name
+        real_path = u'/'.join(self.ancestors) + u'/' + self.name
+        if real_path[0] != u'/':
+            real_path = u'/' + real_path
+        return real_path
 
     def get_real_path(self, result=None):
         """获取文件真实路径"""
@@ -53,3 +56,7 @@ class FileTreeNode(FileSymlink):
         """记录文件真实路径到临时结果"""
         self.result = self.get_real_path(result=self.result)
         return self
+
+    @property
+    def partnames(self):
+        return self.ancestors + [self.name]
