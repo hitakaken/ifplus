@@ -44,6 +44,8 @@ class FileContent(FileAcls):
     @storage_type.setter
     def storage_type(self, storage_type):
         """设置文件内容存储方式"""
+        if u'content' not in self.underlying:
+            self.underlying[u'content'] = {}
         self.underlying[u'content'][u'storage'] = storage_type
         self.changes[u'content'].add(u'storage')
 
@@ -55,6 +57,8 @@ class FileContent(FileAcls):
     @content_type.setter
     def content_type(self, content_type):
         """设置文件内容类型"""
+        if u'content' not in self.underlying:
+            self.underlying[u'content'] = {}
         self.underlying[u'content'][u'ctype'] = content_type
         self.changes[u'content'].add(u'ctype')
 
@@ -66,6 +70,8 @@ class FileContent(FileAcls):
     @content_uri.setter
     def content_uri(self, content_uri):
         """设置文件内容链接"""
+        if u'content' not in self.underlying:
+            self.underlying[u'content'] = {}
         self.underlying[u'content'][u'uri'] = content_uri
         self.changes[u'content'].add(u'uri')
 
@@ -77,6 +83,8 @@ class FileContent(FileAcls):
     def make_secret(self, user=None, perms=None):
         """保密文件内容"""
         if self.is_full_controller(user=user, perms=perms):
+            if u'content' not in self.underlying:
+                self.underlying[u'content'] = {}
             self.underlying[u'content'][u'secret'] = True
             self.changes[u'content'].add(u'secret')
         else:
@@ -85,6 +93,8 @@ class FileContent(FileAcls):
     def make_overt(self, user=None, perms=None):
         """公开文件内容"""
         if self.is_full_controller(user=user, perms=perms):
+            if u'content' not in self.underlying:
+                self.underlying[u'content'] = {}
             self.underlying[u'content'][u'secret'] = False
             self.changes[u'content'].add(u'secret')
         else:

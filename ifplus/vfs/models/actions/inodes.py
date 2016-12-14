@@ -72,7 +72,7 @@ class FileINode(BaseFileNode):
     @property
     def dev(self):
         """文件对象所在设备"""
-        return self.underlying[u'dev']
+        return self.underlying.get(u'dev', None)
 
     @dev.setter
     def dev(self, dev):
@@ -101,12 +101,12 @@ class FileINode(BaseFileNode):
     @property
     def ancestors(self):
         """祖先节点"""
-        return self.underlying[u'ancestors']
+        return self.underlying.get(u'ancestors', [])
 
     @property
     def uid(self):
         """文件所有者"""
-        return self.underlying[u'uid']
+        return self.underlying.get(u'uid', None)
 
     @uid.setter
     def uid(self, uid):
@@ -128,7 +128,7 @@ class FileINode(BaseFileNode):
     @property
     def gid(self):
         """文件所有组"""
-        return self.underlying[u'gid']
+        return self.underlying.get(u'gid', None)
 
     @gid.setter
     def gid(self, gid):
@@ -197,7 +197,7 @@ class FileINode(BaseFileNode):
     @property
     def nlink(self):
         """文件链接数，有多少个路径指向该文件对象"""
-        return self.underlying[u'nlink']
+        return self.underlying.get(u'nlink', 1)
 
     @nlink.setter
     def nlink(self, nlink):
@@ -208,7 +208,7 @@ class FileINode(BaseFileNode):
     @property
     def size(self):
         """文件大小，文件夹及链接始终为 0"""
-        return self.underlying[u'size']
+        return self.underlying.get(u'size', 0)
 
     @size.setter
     def size(self, size):
@@ -219,7 +219,7 @@ class FileINode(BaseFileNode):
     @property
     def atime(self):
         """文件最后访问时间，访问定义：文件夹浏览，文件内容读取，链接跳转"""
-        return self.underlying[u'atime']
+        return self.underlying.get(u'atime', None)
 
     @property
     def access(self):
@@ -235,7 +235,7 @@ class FileINode(BaseFileNode):
     @property
     def mtime(self):
         """文件最后修改时间，修改定义：文件夹内新增删除，文件内容修改，链接目标修改"""
-        return self.underlying[u'mtime']
+        return self.underlying.get(u'mtime', None)
 
     @property
     def modify(self):
@@ -251,7 +251,7 @@ class FileINode(BaseFileNode):
     @property
     def ctime(self):
         """文件最后变更时间，变更定义：文件对象权限、扩展属性等修改"""
-        return self.underlying[u'ctime']
+        return self.underlying.get(u'ctime', None)
 
     @property
     def change(self):
@@ -267,12 +267,12 @@ class FileINode(BaseFileNode):
     @property
     def create(self):
         """文件创建时间"""
-        return self.underlying[u'create']
+        return self.underlying.get(u'create', None)
 
     @property
     def creator(self):
         """文件创建者"""
-        return self.underlying[u'creator']
+        return self.underlying.get(u'creator', None)
 
     def get_inodes(self, result=None):
         """输出INode信息"""

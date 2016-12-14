@@ -180,6 +180,22 @@ class RootDevice(Operations):
                     {u'$set': {u'content': file_object.content}, u'setOnInsert': {u'_id': file_object.id}},
                     upsert=True)
 
+    def remove(self, file_object):
+        if file_object.is_folder:
+            query = {}
+            for index, partname in enumerate(file_object.partnames):
+                query[u'ancestors.' + str(index)] = partname
+            results = self.vfs.mongo.db.files.find(query)
+            for result in results:
+                self.vfs.mongo.db.trashs.insert_one(result)
+            self.vfs.mongo.db.files.delete_many(query)
+        self.vfs.mongo.db.trashs.insert_one(file_object.underlying)
+        result = self.vfs.mongo.db.files.delete_one({u'_id': file_object.id})
+        if result.deleted_count > 0:
+            return {}
+        else:
+            raise FuseOSError(EIO)
+
     def write_stream(self, file_object, stream):
         self.vfs.mongo.save_file(file_object.fid, stream)
         stored_file = self.vfs.mongo.db[u'fs.files'].find_one_or_404({u'filename': file_object.fid})

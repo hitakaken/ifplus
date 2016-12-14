@@ -22,6 +22,8 @@ class FileComments(FileAcls):
 
     def enable_comments(self, user=None, perms=None):
         if self.is_full_controller(user=user, perms=None):
+            if u'comments' not in self.underlying:
+                self.underlying[u'comments'] = {}
             self.underlying[u'comments'][u'enabled'] = True
             self.changes[u'inodes'].add(u'comments')
         else:

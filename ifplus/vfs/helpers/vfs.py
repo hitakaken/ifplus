@@ -8,7 +8,7 @@ from ..models import comment
 from ..models.exceptions import FuseOSError
 from ..models.actions.rests import CREATE_OPS, READ_OPS, UPDATE_OPS, DELETE_OPS
 from ..models.actions import content
-from ..models.actions.acls import M_WRITE
+from ..models.actions.acls import M_WRITE, M_DELETE
 from ..models.file import FileObject
 # from .devices import MongoDevice
 from ifplus.data.helpers.mongo_utils import init_collection, init_indexes
@@ -79,7 +79,7 @@ class VirtualFileSystem(object):
 
     def _lookup_by_link(self, symlink, current_path=None):
         if symlink.is_link:
-            file_object = self._lookup_by_id(symlink.symlink[u'id'], current_path=current_path)
+            file_object = self._lookup_by_id(ObjectId(symlink.symlink[u'id']), current_path=current_path)
             if not file_object.is_link:
                 return file_object
             else:
@@ -152,6 +152,10 @@ class VirtualFileSystem(object):
     def save(self, file_object):
         device = self.get_device_of(file_object)
         device.save(file_object)
+
+    def remove(self, file_object):
+        device = self.get_device_of(file_object)
+        device.remove(file_object)
 
     def write_stream(self, file_object, steam):
         device = self.get_device_of(file_object)
@@ -252,7 +256,7 @@ class VirtualFileSystem(object):
 
     @staticmethod
     def get_display_path(file_path):
-        if file_path[0] == u'~' or file_path[1] == u'/':
+        if file_path[0] == u'/':
             display_path = file_path
         else:
             display_path = u'/' + file_path
@@ -362,7 +366,7 @@ class VirtualFileSystem(object):
             elif key.startswith(u'xattrs.'):
                 ask_perms |= 0x80
         if op == u'stat':
-            if allow & ask_perms == 0:
+            if allow & ask_perms == 0 and ask_perms > 0:
                 raise FuseOSError(EPERM)
             result = self.returns(file_object, returns, display_path, user=user, perms=(allow, deny, grant), atime=now)
             if file_object.is_changed:
@@ -381,6 +385,20 @@ class VirtualFileSystem(object):
             if u'recursion' in kwargs and kwargs[u'recursion'] > 0:
                 if u'withlinks' in kwargs and kwargs[u'withlinks'] > 0:
                     raise FuseOSError(ENOSYS)
+                query = {}
+                for index, partname in enumerate(file_object.partnames):
+                    query[u'ancestors.' + str(index)] = partname
+                results = self.mongo.db.files.find(query)
+                children = [self.returns(file_obj, returns, display_path + u'/' + file_obj.name,
+                                     user=user, atime=now)
+                        for file_obj in results]
+                if kwargs[u'selfmode'] is not None and kwargs[u'selfmode'] > 0:
+                    result = self.returns(file_object, returns, display_path,
+                        user=user, perms=(allow, deny, grant), atime=now)
+                    result[u'children'] = children
+                else:
+                    result = children
+                return result
             else:
                 file_documents = self.mongo.db.files.find(
                     {u'parent': file_object.id}
@@ -462,10 +480,34 @@ class VirtualFileSystem(object):
             raise FuseOSError(EROFS)
         user = kwargs.get(u'user')
         parts = self.resolve_file_path(file_path, **kwargs)
-        if op == u'mkdir':
-            pass
-        elif op == u'mkdir':
-            pass
+        # 检查待读取对象是否存在
+        if isinstance(parts[-1], unicode):
+            raise FuseOSError(ENOENT)
+        symlink = None
+        if isinstance(parts[-2], FileObject):
+            parent = parts[-2]
+        else:
+            parent_symlink, parent = parts[-2]
+        if isinstance(parts[-1], FileObject):
+            current = parts[-1]
+        else:
+            symlink, current = parts[-1]
+        allow, deny, grant = parent.user_perms(user)
+        if allow & M_WRITE == 0:
+            raise FuseOSError(EPERM)
+        allow, deny, grant = current.user_perms(user)
+        if deny & M_DELETE > 0:
+            raise FuseOSError(EPERM)
+        if symlink is not None:
+            op = u'unlink'
+        if op == u'rmdir':
+            return self.remove(current)
+        elif op == u'rm':
+            return self.remove(current)
+        elif op == u'unlink':
+            symlink.remove_link(current)
+            self.save(symlink)
+            return self.remove(current)
         raise FuseOSError(EROFS)
 
     def upload(self, file_path, **kwargs):

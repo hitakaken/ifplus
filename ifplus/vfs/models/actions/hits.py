@@ -23,7 +23,7 @@ class FileHits(FileAcls):
     @property
     def hits(self):
         """文件对象点击数"""
-        return self.underlying[u'hits']
+        return self.underlying.get(u'hits', { u'o': 0, u'g': 0, u'u': 0, u'p': 0,})
 
     def hit(self, user=None, atime=None):
         """文件点击"""

@@ -23,7 +23,7 @@ class FileXattrs(FileAcls):
     @property
     def xattrs(self):
         """获取扩展属性"""
-        return self.underlying[u'xattrs']
+        return self.underlying.get(u'xattrs', {})
 
     def update_xattrs(self, xattrs, user=None, perms=None, ctime=None):
         """更新扩展属性"""

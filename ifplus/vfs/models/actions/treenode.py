@@ -20,15 +20,15 @@ class FileTreeNode(FileSymlink):
             self.underlying[u'ancestors'] = ancestors
         return self
 
-    @property
-    def ancestors(self):
-        """文件祖先节点"""
-        return self.underlying[u'ancestors']
+    # @property
+    # def ancestors(self):
+    #     """文件祖先节点"""
+    #     return self.underlying.get(u'ancestors', [])
 
     @property
     def parent(self):
         """文件父节点ID"""
-        return self.underlying[u'parent']
+        return self.underlying.get(u'parent', None)
 
     @property
     def parent_file(self):

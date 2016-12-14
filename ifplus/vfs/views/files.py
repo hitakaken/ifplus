@@ -48,12 +48,23 @@ def handle_fuse_os_error(error):
 # mode_pattern = re.compile('^[0-7]{3}$')
 
 
-@ns.route('/files')
+@ns.route('/files/')
 class UserRootView(Resource):
     @ns.doc(id='entry')
     @login_required
     def get(self):
-        app.vfs.read('~')
+        kwargs = {
+            u'user': current_user,
+            u'returns': [u'path', u'inodes', u'hits'],
+            u'op': u'stat'
+        }
+        result = app.vfs.read(u'/', **kwargs)
+        result[u'children'] = [
+            app.vfs.read('~', **kwargs),
+            app.vfs.read(u'projects', **kwargs),
+            app.vfs.read(u'Market', **kwargs)
+        ]
+        return result
 
 
 @ns.route('/files/<path:file_path>')
