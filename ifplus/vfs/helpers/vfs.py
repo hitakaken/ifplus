@@ -265,7 +265,7 @@ class VirtualFileSystem(object):
                 file_object.record_content(user=user, perms=perms, atime=atime)
         if len(xattrs_namespace) + len(xattrs_attrnames) > 1:
             file_object.record_xattrs(xattrs_namespace, xattrs_attrnames)
-        file_object.result.update({u'display_path': display_path})
+        file_object.result.update({u'display_path': display_path, u'name': file_object.name})
         return file_object.result
 
     @staticmethod
