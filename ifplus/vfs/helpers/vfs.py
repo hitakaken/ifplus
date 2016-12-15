@@ -325,7 +325,12 @@ class VirtualFileSystem(object):
             elif op == u'link':
                 if u'target' not in kwargs:
                     raise FuseOSError(EINVAL)
-                target_file = self._lookup_by_file_path(kwargs.get(u'target'))
+                target_parts = self.resolve_file_path(file_path, **kwargs)
+                if isinstance(target_parts[-1], unicode):
+                    raise FuseOSError(ENOENT)
+                if isinstance(target_parts[-1], tuple):
+                    raise FuseOSError(EMLINK)
+                target_file = target_parts[-1] # self._lookup_by_file_path(kwargs.get(u'target'))
                 if target_file is None:
                     raise FuseOSError(ENOENT)
                 file_object.init_symlink(target_file)
