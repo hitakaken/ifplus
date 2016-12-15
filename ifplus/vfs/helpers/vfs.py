@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # bitsAllSet
 import json
-
+from pymongo import ASCENDING, DESCENDING
 from bson import ObjectId
 from errno import *
 from .devices.base import RootDevice
@@ -309,14 +309,15 @@ class VirtualFileSystem(object):
                 results = [self.returns(file_object, returns, display_path,
                                         user=user, perms=(0xFF, 0x00, 0xFF), atime=now)]
                 files = [file_object]
-                for subdirname in kwargs.get(u'subdir', []):
-                    sub_object = FileObject(current_path + u'/' + subdirname, {u'_id': ObjectId()}, vfs=self)
-                    sub_object.init(file_object, subdirname, time=now, user=user)
-                    results.append(self.returns(sub_object, returns, display_path + u'/' + subdirname,
-                                              user=user, perms=(0xFF, 0x00, 0xFF), atime=now))
-                    files.append(sub_object)
-                for f in files:
-                    self.save(f, **kwargs)
+                if kwargs[u'subdir'] is not None:
+                    for subdirname in kwargs.get(u'subdir', []):
+                        sub_object = FileObject(current_path + u'/' + subdirname, {u'_id': ObjectId()}, vfs=self)
+                        sub_object.init(file_object, subdirname, time=now, user=user)
+                        results.append(self.returns(sub_object, returns, display_path + u'/' + subdirname,
+                                                  user=user, perms=(0xFF, 0x00, 0xFF), atime=now))
+                        files.append(sub_object)
+                    for f in files:
+                        self.save(f, **kwargs)
                 return {u'files': results}
             # 创建文件
             elif op == u'touch':
@@ -405,19 +406,25 @@ class VirtualFileSystem(object):
                         query.update({u'mode': {u'$bitsAllSet': 0o120000}})
             if allow & ask_perms == 0:
                 raise FuseOSError(EPERM)
-            if u'inodes' not in returns:
-                returns.append(u'inodes')
+            # if u'inodes' not in returns:
+            #     returns.append(u'inodes')
             if u'content' in returns:
-                returns.remove(u'content', **kwargs)
+                returns.remove(u'content')
             if u'recursion' in kwargs and kwargs[u'recursion'] > 0:
                 if u'withlinks' in kwargs and kwargs[u'withlinks'] > 0:
                     raise FuseOSError(ENOSYS)
                 for index, partname in enumerate(file_object.partnames):
                     query[u'ancestors.' + str(index)] = partname
-                results = self.mongo.db.files.find(query)
-                children = [self.returns(file_obj, returns, display_path + u'/' + file_obj.name,
+                file_documents = self.mongo.db.files.find(query)
+                file_objects = [FileObject(None, file_document, vfs=self) for file_document in file_documents]
+                file_objects = sorted(
+                    file_objects,
+                    key=lambda temp_obj: (u'/'+ u'/'.join(temp_obj.ancestors), temp_obj.name))
+                for file_obj in file_objects:
+                    file_obj.file_path = file_obj.real_path
+                children = [self.returns(file_obj, returns, file_obj.file_path,
                                      user=user, atime=now)
-                        for file_obj in results]
+                        for file_obj in file_objects]
                 if kwargs[u'selfmode'] is not None and kwargs[u'selfmode'] > 0:
                     result = self.returns(file_object, returns, file_object.real_path,
                         user=user, perms=(allow, deny, grant), atime=now)
@@ -426,6 +433,8 @@ class VirtualFileSystem(object):
                     result = children
                 return result
             else:
+                if u'inodes' not in returns:
+                    returns.append(u'inodes')
                 query.update({u'parent': file_object.id})
                 file_documents = self.mongo.db.files.find(query).sort([(u'mode', 1), (u'name', 1)])
                 current_path = file_object.real_path
