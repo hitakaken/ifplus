@@ -21,8 +21,9 @@ from ifplus.data.helpers.time_utils import utcnow
 
 def normalize_payload(payload):
     temp = {}
-    for (k,v) in payload.items():
-        dpath.util.set(temp, k, v)
+    print payload
+    for (k, v) in payload.items():
+        dpath.util.new(temp, k, v, separator='.')
     return temp
 
 
