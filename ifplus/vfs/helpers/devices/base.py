@@ -239,7 +239,7 @@ class RootDevice(Operations):
             storage = GridFS(self.vfs.mongo.db, u'fs')
             try:
                 fileobj = storage.get_version(filename=file_object.fid, version=-1)
-                text = file_object.read()
+                text = fileobj.read()
             except NoFile:
                 pass
         return text
