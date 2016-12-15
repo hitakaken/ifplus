@@ -66,6 +66,31 @@ class FileTags(FileAcls):
         self.underlying[u'tags'] = new_tags
         self.changes[u'inodes'].add(u'tags')
 
+    def update_tags(self, tags, user=None, perms=None, manage=False):
+        """删除标签"""
+        allow, deny, grant = self.user_perms(user=user, perms=perms)
+        if allow & M_TWRITE == 0:
+            raise FuseOSError(EPERM)
+        new_tags = copy.deepcopy(self.underlying.get(u'tags', []))
+        sid = user.sid
+        for tag in new_tags:
+            if tag[u't'] not in tags and sid in tag[u'u']:
+                tag[u'u'].remove(sid)
+        exists_tags = []
+        for tag in new_tags:
+            if tag[u't'] in tags:
+                exists_tags.append(tag[u't'])
+                # if sid not in tag[u'u']:
+                #     tag[u'u'].append(sid)
+        for tag in tags:
+            if tag not in exists_tags:
+                new_tags.append({u't': tag, u'u': [sid]})
+        new_tags = filter(lambda tag: len(tag[u'u']) > 0, new_tags)
+        if manage and grant & M_TWRITE > 0:
+            new_tags = filter(lambda tag: tag[u't'] not in tags, new_tags)
+        self.underlying[u'tags'] = new_tags
+        self.changes[u'inodes'].add(u'tags')
+
     def get_tags(self, result=None):
         """获取文件标签"""
         if result is None:

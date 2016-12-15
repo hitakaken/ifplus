@@ -229,7 +229,7 @@ class VirtualFileSystem(object):
             file_object.content = payload[u'content']
             file_object.modified(mtime=time)
         if u'tags' in payload:
-            file_object.add_tags(payload[u'tags'], user=user, perms=perms)
+            file_object.update_tags(payload[u'tags'], user=user, perms=perms)
         if u'link' in payload:
             pass
         return file_object
