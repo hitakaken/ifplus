@@ -62,7 +62,7 @@ class UserRootView(Resource):
         result[u'children'] = [
             app.vfs.read('~', **kwargs),
             app.vfs.read(u'projects', **kwargs),
-            app.vfs.read(u'Market', **kwargs)
+            # app.vfs.read(u'Market', **kwargs)
         ]
         return result
 

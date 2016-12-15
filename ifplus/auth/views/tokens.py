@@ -71,8 +71,10 @@ class RefreshToken(Resource):
         args = token_request.parse_args()
         return app.tokens.refresh_token(request, args['refresh_token'])
 
+
 @ns.route('/logout')
 class Logout(Resource):
+    @ns.doc(id='logout')
     @login_required
     def get(self):
         return app.tokens.logout(request)

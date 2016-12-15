@@ -319,8 +319,12 @@ class Tokens(object):
         session_id = self.get_and_check_session_id(request)
         self.app.cache.delete(TOKEN_CACHE_PREFIX + session_id)
         resp = make_response()
-        resp.set_cookie('SID', '', expires=0)
-        resp.set_cookie('ATK', '', expires=0)
+        if u'domain' in self.cookie_config:
+            kwargs = {u'domain': self.cookie_config[u'domain']}
+        else:
+            kwargs = {}
+        resp.set_cookie('SID', '', expires=0, **kwargs)
+        resp.set_cookie('ATK', '', expires=0, **kwargs)
         return resp
 
     def lookup_user(self, sid):
