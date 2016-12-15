@@ -145,7 +145,7 @@ class RootDevice(Operations):
     def init_vfs(self, vfs):
         self.vfs = vfs
 
-    def save(self, file_object):
+    def save(self, file_object, **kwargs):
         if u'dev' not in file_object.underlying:
             file_object.underlying[u'dev'] = self.id
         if file_object.is_newly:
@@ -180,7 +180,7 @@ class RootDevice(Operations):
                     {u'$set': {u'content': file_object.content}, u'setOnInsert': {u'_id': file_object.id}},
                     upsert=True)
 
-    def remove(self, file_object):
+    def remove(self, file_object, **kwargs):
         if file_object.is_folder:
             query = {}
             for index, partname in enumerate(file_object.partnames):
@@ -196,7 +196,7 @@ class RootDevice(Operations):
         else:
             raise FuseOSError(EIO)
 
-    def write_stream(self, file_object, stream):
+    def write_stream(self, file_object, stream, **kwargs):
         self.vfs.mongo.save_file(file_object.fid, stream)
         stored_file = self.vfs.mongo.db[u'fs.files'].find_one_or_404({u'filename': file_object.fid})
         file_object.size = stored_file[u'length']
@@ -205,12 +205,16 @@ class RootDevice(Operations):
         file_object.content_type = CONTENT_TYPE_BINARY
         self.save(file_object)
 
-    def read_stream(self, file_object):
+    def read_stream(self, file_object, **kwargs):
         if file_object.storage_type == STORAGE_GRIDFS:
             resp = self.vfs.mongo.send_file(file_object.fid)
         elif file_object.storage_type == STORAGE_OBJECT:
             content = self.vfs.mongo.db.contents.find_one({u'_id': file_object.id})
-            resp = make_response(content)
+            if content is not None:
+                text = content[u'content']
+            else:
+                text = content
+            resp = make_response(text)
         else:
             raise FuseOSError(ENOENT)
         ext_name = file_object.ext_name
@@ -223,3 +227,13 @@ class RootDevice(Operations):
         if file_object.is_changed:
             self.save(file_object)
         return resp
+
+    def read_text(self, file_object, **kwargs):
+        text = ''
+        if file_object.storage_type == STORAGE_OBJECT:
+            content = self.vfs.mongo.db.contents.find_one({u'_id': file_object.id})
+            if content is not None:
+                text = content[u'content']
+        elif file_object.storage_type == STORAGE_GRIDFS:
+            resp = self.vfs.mongo.send_file(file_object.fid)
+        return text

@@ -29,7 +29,7 @@ class VirtualFileSystem(object):
         self.root_file = FileObject(u'/', root, vfs=self)
         self.init_root_file()
 
-    def init_mongo(self):
+    def init_mongodb(self):
         init_collection(self.mongo.db, 'contents')
         init_indexes(self.mongo.db, 'files', MONGO_INDEXES)
         init_indexes(self.mongo.db, 'comments', comment.MONGO_INDEXES)
@@ -151,25 +151,25 @@ class VirtualFileSystem(object):
                 return self.devices[current_path]
         return self.devices[u'/']
 
-    def save(self, file_object):
+    def save(self, file_object, **kwargs):
         device = self.get_device_of(file_object)
-        device.save(file_object)
+        device.save(file_object, **kwargs)
 
-    def remove(self, file_object):
+    def remove(self, file_object, **kwargs):
         device = self.get_device_of(file_object)
-        device.remove(file_object)
+        device.remove(file_object, **kwargs)
 
-    def write_stream(self, file_object, steam):
+    def write_stream(self, file_object, steam, **kwargs):
         device = self.get_device_of(file_object)
-        device.write_stream(file_object, steam)
+        device.write_stream(file_object, steam, **kwargs)
 
-    def read_stream(self, file_object):
+    def read_stream(self, file_object, **kwargs):
         device = self.get_device_of(file_object)
-        return device.read_stream(file_object)
+        return device.read_stream(file_object, **kwargs)
 
-    def read_text(self, file_object):
+    def read_text(self, file_object, **kwargs):
         device = self.get_device_of(file_object)
-        return device.read_text(file_object)
+        return device.read_text(file_object, **kwargs)
 
     @staticmethod
     def update_payload(file_object, payload, time=None, user=None, perms=None):
@@ -220,6 +220,8 @@ class VirtualFileSystem(object):
             file_object.modified(mtime=time)
         if u'tags' in payload:
             file_object.add_tags(payload[u'tags'], user=user, perms=perms)
+        if u'link' in payload:
+            pass
         return file_object
 
     @staticmethod
@@ -300,7 +302,7 @@ class VirtualFileSystem(object):
             file_object = self.update_payload(file_object, payload, time=now, user=user, perms=(0xFF, 0x00, 0xFF))
             # 创建文件夹
             if op == u'mkdir':
-                self.save(file_object)
+                self.save(file_object, **kwargs)
                 return self.returns(file_object, returns, display_path, user=user, perms=(0xFF, 0x00, 0xFF))
             # 创建文件夹及其子文件夹
             elif op == u'mkdirs':
@@ -314,13 +316,13 @@ class VirtualFileSystem(object):
                                               user=user, perms=(0xFF, 0x00, 0xFF), atime=now))
                     files.append(sub_object)
                 for f in files:
-                    self.save(f)
+                    self.save(f, **kwargs)
                 return {u'files': results}
             # 创建文件
             elif op == u'touch':
                 file_object.underlying[u'mode'] &= 0x80000000 | 0o007777
                 file_object.underlying[u'mode'] |= 0o100000
-                self.save(file_object)
+                self.save(file_object, **kwargs)
                 return self.returns(file_object, returns, display_path, user=user, perms=(0xFF, 0x00, 0xFF), atime=now)
             elif op == u'link':
                 if u'target' not in kwargs:
@@ -335,8 +337,8 @@ class VirtualFileSystem(object):
                     raise FuseOSError(ENOENT)
                 file_object.init_symlink(target_file)
                 target_file.add_link(file_object)
-                self.save(file_object)
-                self.save(target_file)
+                self.save(file_object, **kwargs)
+                self.save(target_file, **kwargs)
                 return self.returns(file_object, returns, display_path, user=user, perms=(0xFF, 0x00, 0xFF), atime=now)
         elif op == u'mkdirp':
             pass
@@ -377,7 +379,7 @@ class VirtualFileSystem(object):
                 raise FuseOSError(EPERM)
             result = self.returns(file_object, returns, display_path, user=user, perms=(allow, deny, grant), atime=now)
             if file_object.is_changed:
-                self.save(file_object)
+                self.save(file_object, **kwargs)
             return result
         elif op == u'list':
             if not file_object.is_folder:
@@ -406,7 +408,7 @@ class VirtualFileSystem(object):
             if u'inodes' not in returns:
                 returns.append(u'inodes')
             if u'content' in returns:
-                returns.remove(u'content')
+                returns.remove(u'content', **kwargs)
             if u'recursion' in kwargs and kwargs[u'recursion'] > 0:
                 if u'withlinks' in kwargs and kwargs[u'withlinks'] > 0:
                     raise FuseOSError(ENOSYS)
@@ -446,7 +448,7 @@ class VirtualFileSystem(object):
             if not file_object.is_file:
                 raise FuseOSError(EISDIR)
             file_object.hit(user=user, atime=now)
-            return self.read_stream(file_object)
+            return self.read_stream(file_object, **kwargs)
         raise FuseOSError(EROFS)
 
     def update(self, file_path, **kwargs):
@@ -489,7 +491,7 @@ class VirtualFileSystem(object):
             if ask_perm & allow == 0:
                 raise FuseOSError(EPERM)
             self.update_payload(file_object, payload, time=now, user=user, perms=(allow,deny,grant))
-            self.save(file_object)
+            self.save(file_object, **kwargs)
             return self.returns(file_object, returns, display_path, user=user, perms=(allow,deny,grant))
         elif op == u'rename':
             pass
@@ -525,13 +527,13 @@ class VirtualFileSystem(object):
         if symlink is not None:
             op = u'unlink'
         if op == u'rmdir':
-            return self.remove(current)
+            return self.remove(current, **kwargs)
         elif op == u'rm':
-            return self.remove(current)
+            return self.remove(current, **kwargs)
         elif op == u'unlink':
             current.remove_link(symlink)
-            self.save(current)
-            return self.remove(symlink)
+            self.save(current, **kwargs)
+            return self.remove(symlink, **kwargs)
         raise FuseOSError(EROFS)
 
     def upload(self, file_path, **kwargs):
@@ -578,7 +580,7 @@ class VirtualFileSystem(object):
                     file_object = exists
             else:
                 file_object = current
-        self.write_stream(file_object, kwargs.get(u'file'))
+        self.write_stream(file_object, kwargs.get(u'file'), **kwargs)
         return file_object.record_inodes().record_hits().result
 
     def lookup_user(self, sid):
