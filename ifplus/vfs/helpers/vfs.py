@@ -393,6 +393,14 @@ class VirtualFileSystem(object):
                         query[k] = v
                 except TypeError, e:
                     raise FuseOSError(EINVAL)
+            if kwargs[u'filter'] is not None:
+                for filter in kwargs[u'filter']:
+                    if filter == u'folder':
+                        query.update({u'mode': {u'$bitsAllSet': 0o040000}})
+                    if filter == u'file':
+                        query.update({u'mode': {u'$bitsAllSet': 0o100000}})
+                    if filter == u'link':
+                        query.update({u'mode': {u'$bitsAllSet': 0o120000}})
             if allow & ask_perms == 0:
                 raise FuseOSError(EPERM)
             if u'inodes' not in returns:
@@ -409,7 +417,7 @@ class VirtualFileSystem(object):
                                      user=user, atime=now)
                         for file_obj in results]
                 if kwargs[u'selfmode'] is not None and kwargs[u'selfmode'] > 0:
-                    result = self.returns(file_object, returns, display_path,
+                    result = self.returns(file_object, returns, file_object.real_path,
                         user=user, perms=(allow, deny, grant), atime=now)
                     result[u'children'] = children
                 else:
