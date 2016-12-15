@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # bitsAllSet
 import json
+
+import dpath
 from pymongo import ASCENDING, DESCENDING
 from bson import ObjectId
 from errno import *
@@ -15,6 +17,13 @@ from ..models.file import FileObject
 # from .devices import MongoDevice
 from ifplus.data.helpers.mongo_utils import init_collection, init_indexes
 from ifplus.data.helpers.time_utils import utcnow
+
+
+def normalize_payload(payload):
+    temp = {}
+    for (k,v) in payload:
+        dpath.util.set(temp, k, v)
+    return temp
 
 
 class VirtualFileSystem(object):
@@ -278,6 +287,8 @@ class VirtualFileSystem(object):
             raise FuseOSError(EEXIST)
         user = kwargs.get(u'user')
         payload = kwargs.get(u'payload') if kwargs.get(u'payload') is not None else {}
+        if kwargs[u'edit'] is not None and kwargs[u'edit'] > 0:
+            payload = normalize_payload(payload)
         returns = kwargs.get(u'returns') if kwargs[u'returns'] is not None else [u'path']
         now = utcnow()
         if op == u'mkdir' or op == u'mkdirs' or op == u'touch' or op == u'link':
@@ -479,6 +490,8 @@ class VirtualFileSystem(object):
         now = utcnow()
         if op == u'update':
             payload = kwargs.get(u'payload') if kwargs.get(u'payload') is not None else {}
+            if kwargs[u'edit'] is not None and kwargs[u'edit'] > 0:
+                payload = normalize_payload(payload)
             ask_perm = 0x00
             if u'owner' in payload:
                 ask_perm |= 0xff

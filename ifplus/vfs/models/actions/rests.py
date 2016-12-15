@@ -88,6 +88,7 @@ class Requests(object):
         # op=mkdirs
         self.create.add_argument(u'subdir', help=u'子文件夹名', action=u'append', location=u'args')
         # op=touch
+        self.create.add_argument(u'edit', help=u'编辑模式', type=int, location=u'args')
         # op=link
         self.create.add_argument(u'target', help=u'目标文件', location=u'args')
 
@@ -114,7 +115,7 @@ class Requests(object):
         self.update.add_argument(u'op', help=u'操作类型', required=True, location=u'args')
         self.update.add_argument(u'returns', help=u'返回内容', action=u'append', location=u'args')
         # op=update
-
+        self.update.add_argument(u'edit', help=u'编辑模式', type=int, location=u'args')
         # op=rename
 
         # op=move
