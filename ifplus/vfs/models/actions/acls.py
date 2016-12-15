@@ -92,7 +92,7 @@ class FileAcls(FileINode):
             sid = ace[u'sid']
             if sid not in changes:
                 changes[sid] = {}
-            mask = int(str(u'100000' + u''.join(ace[u'mask'])), 2)
+            mask = ace[u'mask']  # int(str(u'100000' + u''.join(ace[u'mask'])), 2)
             changes[sid][u'new'] = mask
             new_aces.append({u'sid': sid, u'mask': mask})
         check_changes(changes, grant)
@@ -110,7 +110,7 @@ class FileAcls(FileINode):
             sid = ace[u'sid']
             if sid not in changes:
                 changes[sid] = {}
-            mask = int(str(u'100000' + u''.join(ace[u'mask'])), 2)
+            mask = ace[u'mask']  # int(str(u'100000' + u''.join(ace[u'mask'])), 2)
             changes[sid][u'new'] = mask
         for (sid, change) in changes.items():
             if u'old' in change and u'new' not in change:
@@ -197,13 +197,15 @@ class FileAcls(FileINode):
         """获取用户ACL权限列表"""
         if result is None:
             result = {}
-        result.update({
-            u'acl': [{
-                         u'sid': self.vfs.lookup_user(ace[u'sid']),
-                         u'perms': convert_permission_binary_to_array(ace[u'mask']),
-                         u'inherit': 1 if ace[u'mask'] & 0x01000000 > 0 else 0
-                     }
-                     for ace in self.acl]})
+        aces = []
+        for ace in self.acl:
+            current = self.vfs.lookup_user(ace[u'sid'])
+            current.update({
+                u'perms': convert_permission_binary_to_array(ace[u'mask']),
+                u'inherit': 1 if ace[u'mask'] & 0x01000000 > 0 else 0
+            })
+            aces.append(current)
+        result.update({u'acl': aces})
         return result
 
     def get_perms(self, result=None, user=None):
