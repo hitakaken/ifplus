@@ -419,7 +419,7 @@ class VirtualFileSystem(object):
                 file_objects = [FileObject(None, file_document, vfs=self) for file_document in file_documents]
                 file_objects = sorted(
                     file_objects,
-                    key=lambda temp_obj: (u'/'+ u'/'.join(temp_obj.ancestors), temp_obj.name))
+                    key=lambda temp_obj: tuple(temp_obj.ancestors + [temp_obj.name]))
                 for file_obj in file_objects:
                     file_obj.file_path = file_obj.real_path
                 children = [self.returns(file_obj, returns, file_obj.file_path,
