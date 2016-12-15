@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-# SERVER_IP = '10.1.80.180'
-SERVER_IP = '106.14.20.122'
+SERVER_IP = '10.1.80.180'
+# SERVER_IP = '106.14.20.122'
 
-MONGO_HOST = '192.168.25.105'
+MONGO_HOST = '10.1.80.180'
 MONGO_PORT = 27017
 MONGO_DBNAME = 'istis'
 
 REDIS_URL = 'redis://' + SERVER_IP + ':6379/0'
-REDIS_IP = '127.0.0.1' # SERVER_IP  # '192.168.25.105'
+REDIS_IP = '10.1.80.180' # SERVER_IP  # '192.168.25.105'
 
 CACHE = {
     'CACHE_TYPE': 'redis',
@@ -42,7 +42,10 @@ TOKEN = {
     'REFRESH_EXPIRED': 36000,
     'HASHIDS_SALT': 'hashids.chinaconsult.com',
     'TRUST_PROXIES': {'127.0.0.1'},
-    'SUPERS': {'26648537-45ca-4f89-9a99-3c458b1ddaba', '8f77ed0d-6e1e-45d8-8a5c-0ebf4f734d4c'},
+    'SUPERS': {
+        '26648537-45ca-4f89-9a99-3c458b1ddaba',
+        '8f77ed0d-6e1e-45d8-8a5c-0ebf4f734d4c',
+        '882b5b81-74cf-4073-896e-91339099b404'},
     'COOKIE': {
         'DOMAIN': 'www.chinaconsult.com',
         # 'SECURE': True,
@@ -58,8 +61,9 @@ JWT = {
 VFS = {
     'RID': '0000-0000-0000-0000',
     'ROOT': {
-        u'uid': u'u:f726ae2e-ee0f-41ce-a62c-a73b5ef4f3a7',
-        u'gid': u'r:26648537-45ca-4f89-9a99-3c458b1ddaba'
+        # u'uid': u'u:f726ae2e-ee0f-41ce-a62c-a73b5ef4f3a7',
+        u'uid': u'u:f3b4aeac-33ba-4924-8150-4bf697772b92',
+        u'gid': u'r:882b5b81-74cf-4073-896e-91339099b404'
     },
     'DEVICES': {
         # '/home': {'type': 'nfs'},

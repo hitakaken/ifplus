@@ -6,7 +6,7 @@ import random
 import string
 import time
 from bson import ObjectId
-from flask import jsonify
+from flask import jsonify, make_response
 from hashids import Hashids
 from jwcrypto import jwt, jwk
 # print jwk.JWK(generate='oct', size=512).export()
@@ -314,6 +314,14 @@ class Tokens(object):
         if user is None:
             raise NotFound('User not found.')
         return self.make_response(user, request)
+
+    def logout(self, request):
+        session_id = self.get_and_check_session_id(request)
+        self.app.cache.delete(TOKEN_CACHE_PREFIX + session_id)
+        resp = make_response()
+        resp.set_cookie('SID', '', expires=0)
+        resp.set_cookie('ATK', '', expires=0)
+        return resp
 
     def lookup_user(self, sid):
         if sid is None:
