@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # bitsAllSet
+import json
+
 from bson import ObjectId
 from errno import *
 from .devices.base import RootDevice
@@ -376,6 +378,16 @@ class VirtualFileSystem(object):
             if not file_object.is_folder:
                 raise FuseOSError(ENOTDIR)
             ask_perms |= 0x20
+            query = {}
+            if kwargs[u'query'] is not None:
+                try:
+                    query_dict = json.loads(kwargs[u'query'], encoding='utf-8')
+                    for (k, v) in query_dict.items():
+                        if not k.startswith(u'xattrs.'):
+                            k = u'xattrs.'+ k
+                        query[k] = v
+                except TypeError, e:
+                    raise FuseOSError(EINVAL)
             if allow & ask_perms == 0:
                 raise FuseOSError(EPERM)
             if u'inodes' not in returns:
@@ -385,7 +397,6 @@ class VirtualFileSystem(object):
             if u'recursion' in kwargs and kwargs[u'recursion'] > 0:
                 if u'withlinks' in kwargs and kwargs[u'withlinks'] > 0:
                     raise FuseOSError(ENOSYS)
-                query = {}
                 for index, partname in enumerate(file_object.partnames):
                     query[u'ancestors.' + str(index)] = partname
                 results = self.mongo.db.files.find(query)
@@ -400,9 +411,8 @@ class VirtualFileSystem(object):
                     result = children
                 return result
             else:
-                file_documents = self.mongo.db.files.find(
-                    {u'parent': file_object.id}
-                ).sort([(u'mode', 1), (u'name', 1)])
+                query.update({u'parent': file_object.id})
+                file_documents = self.mongo.db.files.find(query).sort([(u'mode', 1), (u'name', 1)])
                 current_path = file_object.real_path
                 file_objects = [FileObject(current_path + u'/' + file_document[u'name'], file_document, vfs=self)
                                 for file_document in file_documents]
@@ -475,6 +485,7 @@ class VirtualFileSystem(object):
         raise FuseOSError(EROFS)
 
     def delete(self, file_path, **kwargs):
+        display_path = self.get_display_path(file_path)
         op = kwargs.get(u'op')
         if op not in DELETE_OPS:
             raise FuseOSError(EROFS)
@@ -505,9 +516,9 @@ class VirtualFileSystem(object):
         elif op == u'rm':
             return self.remove(current)
         elif op == u'unlink':
-            symlink.remove_link(current)
-            self.save(symlink)
-            return self.remove(current)
+            current.remove_link(symlink)
+            self.save(current)
+            return self.remove(symlink)
         raise FuseOSError(EROFS)
 
     def upload(self, file_path, **kwargs):

@@ -96,6 +96,7 @@ class Requests(object):
         self.read.add_argument(u'op', help=u'操作类型', required=True, location=u'args')
         self.read.add_argument(u'returns', help=u'返回内容', action=u'append', location=u'args')
         # op=list
+        self.read.add_argument(u'query', help=u'搜索条件', location=u'args')
         self.read.add_argument(u'selfmode', help=u'是否返回本身', type=int, location=u'args')
         self.read.add_argument(u'recursion', help=u'是否递归', type=int, location=u'args')
         self.read.add_argument(u'withlinks', help=u'是否跟随链接', type=int, location=u'args')
