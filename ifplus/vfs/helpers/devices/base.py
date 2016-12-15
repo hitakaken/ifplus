@@ -5,6 +5,7 @@ from errno import *
 from flask import make_response
 from ...models.exceptions import FuseOSError
 from ifplus.vfs.models.actions import CONTENT_TYPE_BINARY, STORAGE_GRIDFS, STORAGE_OBJECT
+from gridfs import GridFS, NoFile
 
 mimetypes.init()
 
@@ -229,11 +230,16 @@ class RootDevice(Operations):
         return resp
 
     def read_text(self, file_object, **kwargs):
-        text = ''
+        text = u''
         if file_object.storage_type == STORAGE_OBJECT:
             content = self.vfs.mongo.db.contents.find_one({u'_id': file_object.id})
             if content is not None:
                 text = content[u'content']
         elif file_object.storage_type == STORAGE_GRIDFS:
-            resp = self.vfs.mongo.send_file(file_object.fid)
+            storage = GridFS(self.vfs.mongo.db, u'fs')
+            try:
+                fileobj = storage.get_version(filename=file_object.fid, version=-1)
+                text = file_object.read()
+            except NoFile:
+                pass
         return text
