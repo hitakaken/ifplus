@@ -65,13 +65,16 @@ class FileXattrs(FileAcls):
             for namespace in namespaces:
                 if namespace in self.underlying[u'xattrs']:
                     new_xattrs[namespace] = self.underlying[u'xattrs'][namespace]
+                else:
+                    new_xattrs[namespace] = {}
         for attrname in attrnames:
             try:
                 value = dpath.util.get(self.xattrs, attrname, separator='.')
                 dpath.util.new(new_xattrs, attrname, value, separator='.')
                 dpath.util.set(new_xattrs, attrname, value, separator='.')
             except KeyError:
-                pass
+                dpath.util.new(new_xattrs, attrname, None, separator='.')
+
         result.update({
             u'xattrs': new_xattrs
         })
