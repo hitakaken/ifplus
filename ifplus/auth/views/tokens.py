@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import current_app as app, request
+from flask_login import login_required, current_user
 from werkzeug.exceptions import NotFound, Unauthorized
 from ifplus.restful.patched import Namespace, Resource, fields
 
@@ -69,5 +70,11 @@ class RefreshToken(Resource):
         """
         args = token_request.parse_args()
         return app.tokens.refresh_token(request, args['refresh_token'])
+
+@ns.route('/logout')
+class Logout(Resource):
+    @login_required
+    def get(self):
+        return app.tokens.logout(request)
 
 
