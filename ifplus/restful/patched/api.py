@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import jsonify
+from flask import jsonify, url_for
 from flask_restplus import Api as OriginalApi
 from werkzeug import exceptions as http_exceptions
 from werkzeug.utils import cached_property
@@ -25,6 +25,9 @@ class Api(OriginalApi):
         self.add_namespace(_namespace)
         return _namespace
 
+    @property
+    def spec_url(self):
+        return url_for(self.endpoint('specs'), _external=True, _scheme='https')
 
 # Return validation errors as JSON
 def handle_validation_error(err):
