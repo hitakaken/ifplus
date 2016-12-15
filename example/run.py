@@ -14,6 +14,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 @app.before_first_request
 def start():
     app.tokens.init_mongodb()
+    app.vfs.init_mongodb()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=80, debug=True)
