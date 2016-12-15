@@ -68,6 +68,7 @@ class FileXattrs(FileAcls):
         for attrname in attrnames:
             try:
                 value = dpath.util.get(self.xattrs, attrname, separator='.')
+                dpath.util.new(new_xattrs, attrname, value, separator='.')
                 dpath.util.set(new_xattrs, attrname, value, separator='.')
             except KeyError:
                 pass
