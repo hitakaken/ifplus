@@ -60,7 +60,7 @@ class Models(object):
 CREATE_OPS = [u'mkdir', u'mkdirs', u'mkdirp', u'touch', u'link']
 READ_OPS = [u'list', u'stat', u'download']
 UPDATE_OPS = [u'write', u'rename', u'move', u'update']
-DELETE_OPS = [u'rmdir', u'rm']
+DELETE_OPS = [u'rmdir', u'rm', u'unlink']
 
 
 class Requests(object):
