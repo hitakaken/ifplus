@@ -25,10 +25,6 @@ class Api(OriginalApi):
         self.add_namespace(_namespace)
         return _namespace
 
-    @property
-    def spec_url(self):
-        return url_for(self.endpoint('specs'), _external=True, _scheme='https')
-
 # Return validation errors as JSON
 def handle_validation_error(err):
     exc = err.data['exc']
