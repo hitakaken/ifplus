@@ -342,15 +342,23 @@ class Tokens(object):
         iid = sid[2:]
         if sid[:2] == u'u:':
             user = self.app.rbac.users.find_by_iid(iid)
-            self.app.cache.set(u'sid:' + sid, user.name, timeout=24*3600)
+            if user is not None:
+                name = user.name
+                self.app.cache.set(u'sid:' + sid, name, timeout=24*3600)
+            else:
+                name = u"Unknown"
             return {
                 u'sid': sid,
-                u'name': user.name
+                u'name': name
             }
         if sid[:2] == u'r:':
             role = self.app.rbac.roles.find_by_iid(iid)
-            self.app.cache.set(u'sid:' + sid, role.name, timeout=24 * 3600)
+            if role is not None:
+                name = role.name
+                self.app.cache.set(u'sid:' + sid, name, timeout=24 * 3600)
+            else:
+                name = u"Unknown"
             return {
                 u'sid': sid,
-                u'name': role.name
+                u'name': name
             }
