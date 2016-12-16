@@ -101,6 +101,7 @@ class Requests(object):
         self.read.add_argument(u'filter', help=u'过滤条件', action=u'append', location=u'args')
         self.read.add_argument(u'selfmode', help=u'是否返回本身', type=int, location=u'args')
         self.read.add_argument(u'recursion', help=u'是否递归', type=int, location=u'args')
+        # self.read.add_argument(u'status', help=u'过滤状态', location=u'args')
         self.read.add_argument(u'withlinks', help=u'是否跟随链接', type=int, location=u'args')
         self.read.add_argument(u'page.size', help=u'每页记录数', type=int, location=u'args')
         self.read.add_argument(u'page.page', help=u'当前页码', type=int, location=u'args')

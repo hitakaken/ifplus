@@ -427,7 +427,17 @@ class VirtualFileSystem(object):
                     raise FuseOSError(ENOSYS)
                 for index, partname in enumerate(file_object.partnames):
                     query[u'ancestors.' + str(index)] = partname
-                file_documents = self.mongo.db.files.find(query)
+                is_page = False
+                if kwargs[u'page.page'] is not None or kwargs[u'page.size'] is not None:
+                    page = 1 if kwargs[u'page.page'] is None else kwargs[u'page.page']
+                    size = 10 if kwargs[u'page.page'] is None else kwargs[u'page.size']
+                    if size > 500:
+                        size = 500
+                    file_documents = self.mongo.db.files.find(query).skip((page-1)*size).limit(size)
+                    is_page = True
+                    kwargs[u'selfmode'] = 1
+                else:
+                    file_documents = self.mongo.db.files.find(query)
                 file_objects = [FileObject(None, file_document, vfs=self) for file_document in file_documents]
                 file_objects = sorted(
                     file_objects,
@@ -443,6 +453,10 @@ class VirtualFileSystem(object):
                     result[u'children'] = children
                 else:
                     result = children
+                if is_page:
+                    result[u'count'] = file_documents.count()
+                    result[u'page'] = page
+                    result[u'size'] = size
                 return result
             else:
                 if u'inodes' not in returns:
