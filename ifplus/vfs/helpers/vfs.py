@@ -340,7 +340,7 @@ class VirtualFileSystem(object):
             elif op == u'link':
                 if u'target' not in kwargs:
                     raise FuseOSError(EINVAL)
-                target_parts = self.resolve_file_path(file_path, **kwargs)
+                target_parts = self.resolve_file_path(kwargs[u'target'], **kwargs)
                 if isinstance(target_parts[-1], unicode):
                     raise FuseOSError(ENOENT)
                 if isinstance(target_parts[-1], tuple):
