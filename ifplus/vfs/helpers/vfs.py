@@ -432,12 +432,12 @@ class VirtualFileSystem(object):
                 for index, partname in enumerate(file_object.partnames):
                     query[u'ancestors.' + str(index)] = partname
                 is_page = False
-                if kwargs[u'page.page'] is not None or kwargs[u'page.size'] is not None:
-                    page = 1 if kwargs[u'page.page'] is None else kwargs[u'page.page']
-                    size = 10 if kwargs[u'page.page'] is None else kwargs[u'page.size']
-                    if size > 500:
-                        size = 500
-                    file_documents = self.mongo.db.files.find(query).skip((page-1)*size).limit(size)
+                if kwargs[u'drop'] is not None or kwargs[u'take'] is not None:
+                    drop = 0 if kwargs[u'drop'] is None else kwargs[u'drop']
+                    take = 10 if kwargs[u'take'] is None else kwargs[u'take']
+                    if take > 500:
+                        take = 500
+                    file_documents = self.mongo.db.files.find(query).skip(drop).limit(take)
                     is_page = True
                     kwargs[u'selfmode'] = 1
                 else:
