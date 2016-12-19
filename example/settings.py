@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-SERVER_IP = '10.1.80.180'
-# SERVER_IP = '106.14.20.122'
+# SERVER_IP = '10.1.80.180'
+SERVER_IP = '106.14.20.122'
 
-MONGO_HOST = '10.1.80.180'  # '106.14.20.122'
+MONGO_HOST = SERVER_IP  # '106.14.20.122'
 MONGO_PORT = 27017
 MONGO_DBNAME = 'istis'
 
 REDIS_URL = 'redis://' + SERVER_IP + ':6379/0'
-REDIS_IP = '10.1.80.180'  # SERVER_IP  # '192.168.25.105'
+REDIS_IP = SERVER_IP  # '192.168.25.105' # '10.1.80.180'
 
 CACHE = {
     'CACHE_TYPE': 'redis',
@@ -22,7 +22,7 @@ LDAP = {
     'BASE_DN': 'dc=chinaconsult,dc=com',
     'ROOT_DN': 'cn=Manager,dc=chinaconsult,dc=com',
     'ROOT_PW': 'secret',
-    'URI': 'ldap://' +  SERVER_IP, # '106.14.20.122', #
+    'URI': 'ldap://' + SERVER_IP, # '106.14.20.122', #
     'OPTIONS': {
         # 'REQUIRE_CERT': True,
         # 'CACERTFILE': '/root/server.pem',
@@ -42,8 +42,7 @@ TOKEN = {
     'REFRESH_EXPIRED': 36000,
     'HASHIDS_SALT': 'hashids.chinaconsult.com',
     'TRUST_PROXIES': {'127.0.0.1'},
-    'SUPERS': {
-        '485474f4-49ed-43db-8ba5-334c975c674b'},
+    'SUPERS': {'[Role]Administrators'},
     'COOKIE': {
         'DOMAIN': 'www.chinaconsult.com',
         # 'SECURE': True,
@@ -59,9 +58,9 @@ JWT = {
 VFS = {
     'RID': '0000-0000-0000-0000',
     'ROOT': {
-        u'uid': u'r:485474f4-49ed-43db-8ba5-334c975c674b',
+        u'uid':  u'[Role]Administrators',
         # u'uid': u'u:f3b4aeac-33ba-4924-8150-4bf697772b92',
-        u'gid': u'r:485474f4-49ed-43db-8ba5-334c975c674b'
+        u'gid':  u'[RoleID]Administrators'
     },
     'DEVICES': {
         # '/home': {'type': 'nfs'},

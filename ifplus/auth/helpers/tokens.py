@@ -157,11 +157,24 @@ class Tokens(object):
         self.refresh_expired = config.get('REFRESH_EXPIRED', 36000)
         self.hashids = Hashids(salt=config.get('HASHIDS_SALT', 'hashids salt'))
         self.trusted_proxies = config.get('TRUST_PROXIES', set())
-        self.supers = config.get('SUPERS', set())
+        self.supers = set()
+        for role in config.get('SUPERS', set()):
+            self.supers.add(self.get_role(role, sid=False))
         self.cookie_config = dict((k.lower(), v) for (k, v) in config.get('COOKIE', {}).items())
 
     def init_mongodb(self):
         init_indexes(self.app.mongo.db, u'tokens', MONGO_INDEXES)
+
+    def get_role(self, role_name, sid=False):
+        if role_name.startswith('[Role]'):
+            role_name = role_name[6:]
+            role = self.app.rbac.roles.find_one(role_name)
+            if role is not None:
+                return u'r:' + unicode(role.id) if sid else role.id
+            else:
+                return None
+        else:
+            return role_name
 
     def generate_unique_token_id(self):
         """生成唯一令牌ID"""

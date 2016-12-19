@@ -51,6 +51,10 @@ class VirtualFileSystem(object):
             self.root_file.underlying[u'_id'] = None
         if u'dev' not in self.root_file.underlying:
             self.root_file.underlying[u'dev'] = self.devices[u'/'].id
+        if u'uid' in self.root_file.underlying and self.root_file.underlying[u'uid'].startswith(u'[Role]'):
+            self.root_file.underlying[u'uid'] = self.app.tokens.get_role(self.root_file.underlying[u'uid'], sid=True)
+        if u'gid' in self.root_file.underlying and self.root_file.underlying[u'gid'].startswith(u'[Role]'):
+            self.root_file.underlying[u'gid'] = self.app.tokens.get_role(self.root_file.underlying[u'gid'], sid=True)
         if u'ancestors' not in self.root_file.underlying:
             self.root_file.underlying[u'ancestors'] = []
         if u'parent' not in self.root_file.underlying:
