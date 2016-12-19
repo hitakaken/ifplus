@@ -459,8 +459,8 @@ class VirtualFileSystem(object):
                     result = children
                 if is_page:
                     result[u'count'] = file_documents.count()
-                    result[u'page'] = page
-                    result[u'size'] = size
+                    result[u'drop'] = drop
+                    result[u'take'] = take
                 return result
             else:
                 if u'inodes' not in returns:
