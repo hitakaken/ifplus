@@ -107,6 +107,8 @@ class Requests(object):
         # self.read.add_argument(u'page.page', help=u'当前页码', type=int, location=u'args')
         self.read.add_argument(u'drop', help=u'跳过记录数量', type=int, location=u'args')
         self.read.add_argument(u'take', help=u'获取记录数量', type=int, location=u'args')
+        self.read.add_argument(u'sort', help=u'排序字段', location=u'args')
+        self.read.add_argument(u'desc', help=u'是否倒序', type=int, location=u'args')
         # op=stat
 
         # op=list or stat

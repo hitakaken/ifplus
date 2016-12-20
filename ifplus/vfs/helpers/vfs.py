@@ -403,6 +403,11 @@ class VirtualFileSystem(object):
                 raise FuseOSError(ENOTDIR)
             ask_perms |= 0x20
             query = {}
+            sort = None
+            if kwargs[u'sort'] is not None:
+                sort = (
+                    kwargs[u'sort'],
+                    DESCENDING if kwargs[u'desc'] is not None and kwargs[u'desc'] > 0 else ASCENDING)
             if kwargs[u'query'] is not None:
                 try:
                     query_dict = json.loads(kwargs[u'query'], encoding='utf-8')
@@ -420,6 +425,8 @@ class VirtualFileSystem(object):
                         query.update({u'mode': {u'$bitsAllSet': 0o100000}})
                     if filter == u'link':
                         query.update({u'mode': {u'$bitsAllSet': 0o120000}})
+                    if filter == u'project':
+                        query.update({u'project': {u'$exists': True}})
             if allow & ask_perms == 0:
                 raise FuseOSError(EPERM)
             # if u'inodes' not in returns:
@@ -437,15 +444,18 @@ class VirtualFileSystem(object):
                     take = 10 if kwargs[u'take'] is None else kwargs[u'take']
                     if take > 500:
                         take = 500
-                    file_documents = self.mongo.db.files.find(query).skip(drop).limit(take)
+                    file_documents = self.mongo.db.files.find(query).skip(drop).limit(take) if sort is None else \
+                        self.mongo.db.files.find(query).sort(sort).skip(drop).limit(take)
                     is_page = True
                     kwargs[u'selfmode'] = 1
                 else:
-                    file_documents = self.mongo.db.files.find(query)
+                    file_documents = self.mongo.db.files.find(query) if sort is None else \
+                        self.mongo.db.files.find(query).sort(sort)
                 file_objects = [FileObject(None, file_document, vfs=self) for file_document in file_documents]
-                file_objects = sorted(
-                    file_objects,
-                    key=lambda temp_obj: tuple(temp_obj.ancestors + [temp_obj.name]))
+                if sort is None:
+                    file_objects = sorted(
+                        file_objects,
+                        key=lambda temp_obj: tuple(temp_obj.ancestors + [temp_obj.name]))
                 for file_obj in file_objects:
                     file_obj.file_path = file_obj.real_path
                 children = [self.returns(file_obj, returns, file_obj.file_path,
