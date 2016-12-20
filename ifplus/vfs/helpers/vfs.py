@@ -408,6 +408,7 @@ class VirtualFileSystem(object):
                 sort = (
                     kwargs[u'sort'],
                     DESCENDING if kwargs[u'desc'] is not None and kwargs[u'desc'] > 0 else ASCENDING)
+                sort_field, sort_direction = sort
             if kwargs[u'query'] is not None:
                 try:
                     query_dict = json.loads(kwargs[u'query'], encoding='utf-8')
@@ -445,12 +446,12 @@ class VirtualFileSystem(object):
                     if take > 500:
                         take = 500
                     file_documents = self.mongo.db.files.find(query).skip(drop).limit(take) if sort is None else \
-                        self.mongo.db.files.find(query).sort(sort).skip(drop).limit(take)
+                        self.mongo.db.files.find(query).sort(sort_field, sort_direction).skip(drop).limit(take)
                     is_page = True
                     kwargs[u'selfmode'] = 1
                 else:
                     file_documents = self.mongo.db.files.find(query) if sort is None else \
-                        self.mongo.db.files.find(query).sort(sort)
+                        self.mongo.db.files.find(query).sort(sort_field, sort_direction)
                 file_objects = [FileObject(None, file_document, vfs=self) for file_document in file_documents]
                 if sort is None:
                     file_objects = sorted(
