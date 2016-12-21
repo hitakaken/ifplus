@@ -27,6 +27,8 @@ install_requires = [
     'dpath',
     'pymongo',
     'Flask-PyMongo',
+    'BeautifulSoup',
+    'werkzeug',
     'watchdog',
     'socketIO-client',
     'flask-socketio',

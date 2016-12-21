@@ -182,15 +182,17 @@ class RootDevice(Operations):
                     upsert=True)
 
     def remove(self, file_object, **kwargs):
+        use_trash = u'trash' in kwargs and kwargs[u'trash']
         if file_object.is_folder:
             query = {}
             for index, partname in enumerate(file_object.partnames):
                 query[u'ancestors.' + str(index)] = partname
             results = self.vfs.mongo.db.files.find(query)
-            for result in results:
-                self.vfs.mongo.db.trashs.insert_one(result)
+            if use_trash:
+                self.vfs.mongo.db.trashs.insert_many(results)
             self.vfs.mongo.db.files.delete_many(query)
-        self.vfs.mongo.db.trashs.insert_one(file_object.underlying)
+        if use_trash:
+            self.vfs.mongo.db.trashs.insert_one(file_object.underlying)
         result = self.vfs.mongo.db.files.delete_one({u'_id': file_object.id})
         if result.deleted_count > 0:
             return {}

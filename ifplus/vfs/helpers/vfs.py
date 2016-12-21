@@ -7,6 +7,7 @@ from pymongo import ASCENDING, DESCENDING
 from bson import ObjectId
 from errno import *
 from .devices.base import RootDevice
+from .devices.local import LocalStorageDevice
 from ..models.actions.indexes import MONGO_INDEXES
 from ..models import comment
 from ..models.exceptions import FuseOSError
@@ -35,7 +36,16 @@ class VirtualFileSystem(object):
         self.cache = app.cache
         self.devices = {u'/': RootDevice(rid, vfs=self)}
         if devices is not None:
-            self.devices.update(devices)
+            for mount_point, device in devices.items():
+                if device[u'type'] == u'local':
+                    self.devices[mount_point] = LocalStorageDevice(
+                        device[u'rid'],
+                        local_storage_path=device[u'storage'],
+                        mount_point=mount_point,
+                        use_relative=u'relative' in device and device[u'relative'],
+                        buffer_size=device[u'buffer'] if u'buffer' in device else 16384,
+                        vfs=self
+                    )
         self.root_file = FileObject(u'/', root, vfs=self)
         self.init_root_file()
 
@@ -159,7 +169,7 @@ class VirtualFileSystem(object):
 
     def get_device_of(self, file_object):
         partnames = file_object.partnames
-        for i in range(0, len(partnames)):
+        for i in range(len(partnames), 0, -1):
             current_path = u'/' + u'/'.join(partnames[0:i])
             if current_path in self.devices:
                 return self.devices[current_path]
@@ -592,6 +602,7 @@ class VirtualFileSystem(object):
         parts = self.resolve_file_path(file_path, **kwargs)
         now = utcnow()
         user = kwargs.get(u'user')
+        stream = kwargs.get(u'file')
         # 目标不存在
         if isinstance(parts[-1], unicode):
             name = parts[-1]
@@ -621,7 +632,7 @@ class VirtualFileSystem(object):
             if allow & M_WRITE == 0:
                 raise FuseOSError(EPERM)
             if current.is_folder:
-                name = kwargs.get(u'file').filename
+                name = stream.filename
                 exists = self._lookup_by_parent_and_name(current, name)
                 if exists is None:
                     current_path = current.file_path + name if current.file_path[-1] == u'/' \
@@ -632,7 +643,7 @@ class VirtualFileSystem(object):
                     file_object = exists
             else:
                 file_object = current
-        self.write_stream(file_object, kwargs.get(u'file'), **kwargs)
+        self.write_stream(file_object, stream, **kwargs)
         return file_object.record_inodes().record_hits().result
 
     def lookup_user(self, sid):

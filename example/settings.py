@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-# SERVER_IP = '10.1.80.180'
+SERVER_IP = '10.1.80.180'
 # SERVER_IP = '106.14.20.122'
-SERVER_IP = '127.0.0.1'
+# SERVER_IP = '127.0.0.1'
 
 MONGO_HOST = SERVER_IP  # '106.14.20.122'
 MONGO_PORT = 27017
 MONGO_DBNAME = 'istis'
 
-REDIS_URL = 'redis://' + SERVER_IP + ':6379/0'
-REDIS_IP = SERVER_IP  # '192.168.25.105' # '10.1.80.180'
+REDIS_IP = '127.0.0.1' # SERVER_IP  # '192.168.25.105' # '10.1.80.180'
+REDIS_URL = 'redis://' + REDIS_IP + ':6379/0'
 
 CACHE = {
     'CACHE_TYPE': 'redis',
@@ -57,13 +57,25 @@ JWT = {
 }
 
 VFS = {
-    'RID': '0000-0000-0000-0000',
-    'ROOT': {
+    u'RID': u'0000-0000-0000-0000',
+    u'ROOT': {
         u'uid':  u'[Role]Administrators',
         # u'uid': u'u:f3b4aeac-33ba-4924-8150-4bf697772b92',
         u'gid':  u'[RoleID]Administrators'
     },
-    'DEVICES': {
+    u'DEVICES': {
+        u'/projects': {
+            u'rid': u'0000-0000-0000-0001',
+            u'type': u'local',
+            u'storage': u'D:\\Workspace\\data\\vfs',
+            u'relative': False,
+        },
+        u'/home': {
+            u'rid': u'0000-0000-0000-0001',
+            u'type': u'local',
+            u'storage': u'D:\\Workspace\\data\\vfs',
+            u'relative': False,
+        }
         # '/home': {'type': 'nfs'},
         # '/www': {'type': 'local'},
         # '/projects': {'type': 'nfs'}

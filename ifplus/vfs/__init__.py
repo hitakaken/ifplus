@@ -16,8 +16,8 @@ class VFS(object):
         self.app = app
         config = app.config.get('VFS', {})
         self.vfs = VirtualFileSystem(app,
-                                     rid=config.get('RID', '0000-0000-0000-0000'),
-                                     root=config.get('ROOT', None),
-                                     devices=config.get('DEVICES', None))
+                                     rid=config.get(u'RID', u'0000-0000-0000-0000'),
+                                     root=config.get(u'ROOT', None),
+                                     devices=config.get(u'DEVICES', None))
         setattr(self.app, 'vfs', self.vfs)
         self.app.api.add_namespace(ns)

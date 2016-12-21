@@ -18,6 +18,8 @@ bidict
 dpath
 pymongo
 Flask-PyMongo
+BeautifulSoup
+werkzeug
 watchdog
 socketIO-client
 flask-socketio
