@@ -20,6 +20,7 @@ from .acls import FileAcls, \
     M_SPECIAL, M_ACTION, M_CONTROL
 from .hits import FileHits, OWNER_HIT, GROUP_HIT, CONTRIBUTOR_HIT, PUBLIC_HIT
 from .xattrs import FileXattrs
+from .project import FileProject
 from .content import FileContent, \
     STORAGE_GRIDFS, STORAGE_OBJECT, STORAGE_LOCALFS, STORAGE_DEVICE, STORAGE_HTTPURL, \
     STORAGE_HDFS, STORAGE_CEPH, STORAGE_UNKNOWN, \

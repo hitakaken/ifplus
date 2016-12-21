@@ -2,13 +2,74 @@
 from ifplus.vfs.models.file import FileObject
 
 
-class Project(FileObject):
-    def __init__(self, project_path, **kwargs):
-        super(Project, self).__init__(project_path, **kwargs)
-        self.props = None
+class PlanVersion(object):
+    pass
 
-    def load(self):
-        self.props = self.underlying[u'project']
+
+class PlanArchive(object):
+    pass
+
+
+class Scenario(object):
+    pass
+
+
+class Baseline(object):
+    pass
+
+
+# -ID
+# - Name
+# - Description
+# - Comment
+# - Objective
+# - Activities
+# - Conditions
+# - Dependencies
+# - StartDate
+# - EndDate
+# - LatestStartDate
+# - EarliestStartDate
+# - LatestEndDate
+# - EarliestEndDate
+# - Effort
+# - Float
+# - Duration
+# - Risk
+# - PostponedUntil
+# - Priority
+# - ResourcePlanningType
+# - Mandatory
+class Initiative(object):
+    pass
+
+
+class Programme(Initiative):
+    pass
+
+
+class Project(Initiative):
+    pass
+
+
+class SubProject(Initiative):
+    pass
+
+
+class WorkPackage(Initiative):
+    pass
+
+
+class Task(Initiative):
+    pass
+
+
+class InitiativeLifeCyclePhase(object):
+    pass
+
+
+class LifeCyclePhase(object):
+    pass
 
 
 

@@ -4,10 +4,10 @@ import datetime
 
 from ifplus.vfs.models.actions import CONTENT_TYPE_UNKNOWN
 from ifplus.vfs.models.actions import STORAGE_UNKNOWN
-from .actions import FileHits, FileXattrs, FileContent, FileComments, FileTags, FileTreeNode, FileShares
+from .actions import FileHits, FileContent, FileComments, FileTags, FileTreeNode, FileShares, FileProject
 
 
-class FileObject(FileHits, FileXattrs, FileContent, FileComments, FileTags, FileTreeNode, FileShares):
+class FileObject(FileHits, FileProject, FileContent, FileComments, FileTags, FileTreeNode, FileShares):
     def __init__(self, file_path, underlying, vfs=None):
         super(FileObject, self).__init__(underlying, vfs=vfs)
         self.file_path = file_path
