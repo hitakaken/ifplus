@@ -6,3 +6,9 @@ ns = Namespace('pm',
                version='1.0',
                description='项目管理 RESTful API',
                tags='projects')
+
+
+@ns.route('/<programme_name>/<project_name>')
+class Projects(Resource):
+    def post(self, programme_name, project_name):
+        pass
